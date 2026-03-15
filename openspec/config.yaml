@@ -1,0 +1,61 @@
+# OpenSpec Configuration
+# https://openspec.dev/
+
+# Required: Default schema for new changes
+schema: spec-driven
+
+# Project context (max 50KB)
+# Injected into ALL artifact instructions
+context: |
+  tts-cli — Markdown to MP3 CLI Tool
+  
+  A command-line tool that converts Markdown (or plain text) documents to MP3 audio.
+  Built with TypeScript + Bun.
+  
+  Tech Stack:
+  - Language: TypeScript
+  - Runtime: Bun
+  - CLI Framework: citty
+  - Config Format: TOML (smol-toml)
+  - Interactive Prompts: @clack/prompts
+  - Progress Bar: cli-progress
+  - TTS API: Doubao (ByteDance)
+  - Audio Play: ffplay (ffmpeg)
+  - PCM → MP3: ffmpeg
+  
+  Directory Structure:
+  - src/index.ts: Entry point, config check, command routing
+  - src/cli.ts: citty command definitions
+  - src/config.ts: Config read/write, 3-layer merge logic
+  - src/setup.ts: First-run interactive setup
+  - src/tts.ts: TTS API calls, 3 runtime modes
+  - src/markdown.ts: Input file preprocessing
+  - src/utils.ts: PCM → MP3 conversion (ffmpeg)
+  - src/env.ts: Environment checks (ffmpeg detection)
+  
+  Config Priority (low → high):
+  Defaults < ~/.config/tts-cli/config.toml < CLI args
+  
+  Coding Conventions:
+  - Use TypeScript strict mode
+  - Prefer async/await over callbacks
+  - Use Bun-native APIs when available (Bun.which, Bun.write)
+  - Error handling: throw descriptive errors, catch at CLI level
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Explain WHY before WHAT
+    - Include impact on existing features
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Requirements MUST use RFC 2119 keywords (MUST/SHOULD/MAY)
+  design:
+    - Document key implementation decisions
+    - Note any external dependencies or constraints
+  tasks:
+    - Break into testable units
+    - Include verification steps
+  tests:
+    - Cover happy path and edge cases
+    - Mock external APIs (Doubao TTS)
