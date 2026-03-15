@@ -1,12 +1,12 @@
 import { defineCommand } from 'citty'
-import { loadConfig } from './config.js'
 import { runConfigCommand } from './commands/config.js'
 import { runConvert } from './commands/convert.js'
 
-const cli = defineCommand({
+// Convert command (default)
+const convertCommand = defineCommand({
   meta: {
-    name: 'tts-cli',
-    description: 'Markdown to MP3 CLI Tool',
+    name: 'convert',
+    description: 'Convert markdown to MP3',
   },
   args: {
     input: {
@@ -73,34 +73,46 @@ const cli = defineCommand({
       description: 'Resource ID (seed-tts-1.0, seed-tts-2.0, etc.)',
     },
   },
-  subCommands: {
-    config: defineCommand({
-      meta: {
-        name: 'config',
-        description: 'Manage configuration',
-      },
-      args: {
-        edit: {
-          type: 'boolean',
-          description: 'Open config in editor',
-          default: false,
-        },
-        reset: {
-          type: 'boolean',
-          description: 'Reset configuration',
-          default: false,
-        },
-      },
-      async run({ args }) {
-        await runConfigCommand(args)
-      },
-    }),
-  },
   run({ args }) {
     if (args.noSave && !args.play) {
       throw new Error('--no-save requires --play')
     }
     return runConvert(args.input, args)
+  },
+})
+
+// Config command
+const configCommand = defineCommand({
+  meta: {
+    name: 'config',
+    description: 'Manage configuration',
+  },
+  args: {
+    edit: {
+      type: 'boolean',
+      description: 'Open config in editor',
+      default: false,
+    },
+    reset: {
+      type: 'boolean',
+      description: 'Reset configuration',
+      default: false,
+    },
+  },
+  async run({ args }) {
+    await runConfigCommand(args)
+  },
+})
+
+// Main CLI with subcommands
+const cli = defineCommand({
+  meta: {
+    name: 'tts-cli',
+    description: 'Markdown to MP3 CLI Tool',
+  },
+  subCommands: {
+    convert: convertCommand,
+    config: configCommand,
   },
 })
 

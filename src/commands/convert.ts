@@ -27,7 +27,7 @@ function parseNumber(value: string | undefined): number | undefined {
 }
 
 export async function runConvert(input: string, args: ConvertArgs): Promise<void> {
-  const config = loadConfig()
+  const config = await loadConfig()
 
   const options: TTSOptions = {
     output: args.output,

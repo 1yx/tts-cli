@@ -16,6 +16,16 @@ async function main() {
     await runSetup()
   }
 
+  // If no subcommand provided, default to convert
+  // Inject 'convert' as first argument if not a subcommand
+  if (args.length > 0 && !args[0].startsWith('-') && args[0] !== 'config') {
+    // First arg is input file, not a command - prepend 'convert'
+    process.argv.splice(2, 0, 'convert')
+  } else if (args.length === 0 || args[0].startsWith('-')) {
+    // No args or starts with option - need to add 'convert'
+    process.argv.splice(2, 0, 'convert')
+  }
+
   // Run CLI
   await runMain(cli)
 }

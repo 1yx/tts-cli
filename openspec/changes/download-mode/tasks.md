@@ -59,7 +59,7 @@
 - [x] 9.2 更新 src/tts.ts 的 TTSOptions 接口包含 resourceId?: string
 - [x] 9.3 修改 buildHeaders() 支持 CLI override 的 resource_id
 - [x] 9.4 更新 src/commands/convert.ts 传递 resourceId 到 TTS 函数
-- [ ] 9.5 验证 --resource-id 参数正确覆盖配置文件值
+- [x] 9.5 验证 --resource-id 参数正确覆盖配置文件值
 
 ## Phase 10: 移除 model 参数
 
@@ -69,22 +69,27 @@
 - [x] 10.4 从 src/commands/convert.ts 移除 model 字段
 - [x] 10.5 从 src/config.ts 的 Config 接口移除 model 字段
 
-## Phase 10: 手动调试 - seed-tts-1.0
+## Phase 11: 手动调试 - seed-tts-1.0
 
-- [ ] 10.1 创建测试文本 test/fixtures/test-seed-tts-1.0.md
-- [ ] 10.2 使用 resource_id=seed-tts-1.0 测试中文 TTS
-- [ ] 10.3 使用 resource_id=seed-tts-1.0 测试英文 TTS
-- [ ] 10.4 验证 API 响应正常，MP3 文件正确生成
-- [ ] 10.5 记录 seed-tts-1.0 与音色的兼容性
+- [x] 11.1 创建测试文本 test/fixtures/test-seed-tts-1.0.md
+- [x] 11.2 使用 resource_id=seed-tts-1.0 测试中文 TTS
+- [ ] 11.3 使用 resource_id=seed-tts-1.0 测试英文 TTS
+- [x] 11.4 验证 API 响应正常，MP3 文件正确生成
+- [x] 11.5 记录 seed-tts-1.0 与音色的兼容性
 
-## Phase 11: 手动调试 - seed-tts-2.0
+**记录：**
+- seed-tts-1.0 兼容音色格式：*_mars_bigtts, *_moon_bigtts
+- 测试成功的音色：zh_female_vv_mars_bigtts (Vivi)
+- 音色名称不匹配时会返回空文件（无错误提示）
 
-- [ ] 11.1 使用默认 resource_id=seed-tts-2.0 测试中文 TTS
-- [ ] 11.2 使用 resource_id=seed-tts-2.0 测试英文 TTS
-- [ ] 11.3 验证 API 响应正常，MP3 文件正确生成
-- [ ] 11.4 记录 seed-tts-2.0 与音色的兼容性
+## Phase 12: 手动调试 - seed-tts-2.0
 
-## Phase 12: 文档更新
+- [x] 12.1 使用默认 resource_id=seed-tts-2.0 测试中文 TTS
+- [ ] 12.2 使用 resource_id=seed-tts-2.0 测试英文 TTS
+- [x] 12.3 验证 API 响应正常，MP3 文件正确生成
+- [ ] 12.4 记录 seed-tts-2.0 与音色的兼容性
+
+## Phase 13: 文档更新
 
 - [x] 12.1 更新 CLAUDE.md 说明不同 resource_id 的用途
 - [x] 12.2 移除 model 参数相关说明
