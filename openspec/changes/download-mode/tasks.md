@@ -73,21 +73,28 @@
 
 - [x] 11.1 创建测试文本 test/fixtures/test-seed-tts-1.0.md
 - [x] 11.2 使用 resource_id=seed-tts-1.0 测试中文 TTS
-- [ ] 11.3 使用 resource_id=seed-tts-1.0 测试英文 TTS
+- [x] 11.3 使用 resource_id=seed-tts-1.0 测试英文 TTS
 - [x] 11.4 验证 API 响应正常，MP3 文件正确生成
 - [x] 11.5 记录 seed-tts-1.0 与音色的兼容性
 
 **记录：**
-- seed-tts-1.0 兼容音色格式：*_mars_bigtts, *_moon_bigtts
-- 测试成功的音色：zh_female_vv_mars_bigtts (Vivi)
+- 兼容音色格式：*_mars_bigtts, *_moon_bigtts
+- 中文测试：zh_female_vv_mars_bigtts (Vivi) ✓
+- 英文测试：en_female_lauren_moon_bigtts (Lauren) ✓
 - 音色名称不匹配时会返回空文件（无错误提示）
 
 ## Phase 12: 手动调试 - seed-tts-2.0
 
 - [x] 12.1 使用默认 resource_id=seed-tts-2.0 测试中文 TTS
-- [ ] 12.2 使用 resource_id=seed-tts-2.0 测试英文 TTS
+- [x] 12.2 使用 resource_id=seed-tts-2.0 测试英文 TTS
 - [x] 12.3 验证 API 响应正常，MP3 文件正确生成
-- [ ] 12.4 记录 seed-tts-2.0 与音色的兼容性
+- [x] 12.4 记录 seed-tts-2.0 与音色的兼容性
+
+**记录：**
+- 兼容音色格式：*_uranus_bigtts, *_saturn_bigtts, *_jupiter_bigtts
+- 中文测试：zh_female_vv_uranus_bigtts (Vivi 2.0) ✓
+- 英文测试：en_male_tim_uranus_bigtts (Tim) ✓
+- 默认 resource_id，支持大多数现代音色
 
 ## Phase 13: 文档更新
 
