@@ -8,7 +8,11 @@
     "dev": "bun run src/index.ts",
     "build": "bun build src/index.ts --compile --outfile dest/tts-cli",
     "typecheck": "tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
@@ -18,6 +22,15 @@
     "smol-toml": "^1.3.0"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
+    "bun-types": "latest",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsdoc": "^62.8.0",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-tsdoc": "^0.5.2",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1"
   }
 }

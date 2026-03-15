@@ -1,4 +1,4 @@
-import { log } from '@clack/prompts'
+import { log } from '@clack/prompts';
 
 // Environment checking utilities
 
@@ -6,14 +6,14 @@ import { log } from '@clack/prompts'
  * Check if ffmpeg is available in PATH
  */
 export function hasFfmpeg(): boolean {
-  return Bun.which('ffmpeg') !== null
+  return Bun.which('ffmpeg') !== null;
 }
 
 /**
  * Check if ffplay is available in PATH
  */
 export function hasFfplay(): boolean {
-  return Bun.which('ffplay') !== null
+  return Bun.which('ffplay') !== null;
 }
 
 /**
@@ -26,8 +26,8 @@ export function getInstallGuide(): string {
     win32:
       '  Windows:  winget install ffmpeg\n' +
       '            Or visit https://ffmpeg.org/download.html',
-  }
-  return guides[process.platform] ?? guides['linux']
+  };
+  return guides[process.platform] ?? guides['linux'];
 }
 
 /**
@@ -42,7 +42,7 @@ ${getInstallGuide()}
 
   To download without playing, run:
     tts-cli input.md
-`.trim()
+`.trim();
 }
 
 /**
@@ -50,7 +50,7 @@ ${getInstallGuide()}
  */
 export function assertFfmpeg(): void {
   if (!hasFfmpeg()) {
-    log.error(formatFfmpegError())
-    process.exit(1)
+    log.error(formatFfmpegError());
+    process.exit(1);
   }
 }

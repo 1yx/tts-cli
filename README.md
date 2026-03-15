@@ -55,19 +55,19 @@ bun run build
 
 ### Chinese Voices (豆包语音合成模型2.0)
 
-| Voice Name | voice_type | Description |
-|------------|-----------|-------------|
-| Vivi 2.0 | `zh_female_vv_uranus_bigtts` | Multi-language (Chinese, Japanese, Indonesian, Mexican Spanish), emotional variation, ASMR |
-| 小何 2.0 | `zh_female_xiaohe_uranus_bigtts` | Chinese, emotional variation, ASMR |
-| 云舟 2.0 | `zh_male_m191_uranus_bigtts` | Chinese, emotional variation, ASMR |
+| Voice Name | voice_type                       | Description                                                                                |
+| ---------- | -------------------------------- | ------------------------------------------------------------------------------------------ |
+| Vivi 2.0   | `zh_female_vv_uranus_bigtts`     | Multi-language (Chinese, Japanese, Indonesian, Mexican Spanish), emotional variation, ASMR |
+| 小何 2.0   | `zh_female_xiaohe_uranus_bigtts` | Chinese, emotional variation, ASMR                                                         |
+| 云舟 2.0   | `zh_male_m191_uranus_bigtts`     | Chinese, emotional variation, ASMR                                                         |
 
 ### English Voices (豆包语音合成模型2.0)
 
-| Voice Name | voice_type | Description |
-|------------|-----------|-------------|
-| Tim | `en_male_tim_uranus_bigtts` | American English, emotional variation, ASMR |
-| Dacey | `en_female_dacey_uranus_bigtts` | American English, emotional variation, ASMR |
-| Stokie | `en_female_stokie_uranus_bigtts` | American English, emotional variation, ASMR |
+| Voice Name | voice_type                       | Description                                 |
+| ---------- | -------------------------------- | ------------------------------------------- |
+| Tim        | `en_male_tim_uranus_bigtts`      | American English, emotional variation, ASMR |
+| Dacey      | `en_female_dacey_uranus_bigtts`  | American English, emotional variation, ASMR |
+| Stokie     | `en_female_stokie_uranus_bigtts` | American English, emotional variation, ASMR |
 
 **More voices available:** See [Volcano Engine Voice List](https://www.volcengine.com/docs/6561/1257544?lang=zh#%E8%B1%86%E5%8C%85%E8%AF%AD%E9%9F%B3%E5%90%88%E6%88%90%E6%A8%A1%E5%9E%8B2-0-%E9%9F%B3%E8%89%B2%E5%88%97%E8%A1%A8)
 
@@ -78,6 +78,7 @@ Configuration file location: `~/.config/tts-cli/config.toml` (macOS/Linux) or `%
 **Editing the config file:**
 
 Use your favorite text editor to open the config file:
+
 ```bash
 # macOS/Linux
 nano ~/.config/tts-cli/config.toml
@@ -87,6 +88,7 @@ notepad %APPDATA%\tts-cli\config.toml
 ```
 
 **Default config file (after setup):**
+
 ```toml
 [api]
 app_id = "your_app_id"
@@ -94,6 +96,7 @@ token  = "your_access_token"
 ```
 
 **Advanced configuration** (optional additions):
+
 ```toml
 [api]
 app_id = "your_app_id"
@@ -198,6 +201,18 @@ bun run src/index.ts input.md
 
 # Type check
 bun run typecheck
+
+# Lint code
+bun run lint
+
+# Fix lint issues automatically
+bun run lint:fix
+
+# Check formatting
+bun run format:check
+
+# Format code
+bun run format
 
 # Run tests
 bun test

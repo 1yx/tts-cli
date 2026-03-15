@@ -8,17 +8,17 @@
 
 ## 技术栈
 
-| 层级 | 选型 |
-|---|---|
-| 语言 | TypeScript |
-| 运行时 / 包管理 / 编译 | Bun |
-| CLI 框架 | citty |
-| 配置文件格式 | TOML（smol-toml） |
-| 交互式引导 | @clack/prompts |
-| 进度条 | cli-progress |
-| TTS API | 火山引擎豆包语音合成大模型 |
-| 音频播放 | ffplay（ffmpeg 附带，跨平台） |
-| PCM → MP3 转码 | ffmpeg（唯一外部依赖） |
+| 层级                   | 选型                          |
+| ---------------------- | ----------------------------- |
+| 语言                   | TypeScript                    |
+| 运行时 / 包管理 / 编译 | Bun                           |
+| CLI 框架               | citty                         |
+| 配置文件格式           | TOML（smol-toml）             |
+| 交互式引导             | @clack/prompts                |
+| 进度条                 | cli-progress                  |
+| TTS API                | 火山引擎豆包语音合成大模型    |
+| 音频播放               | ffplay（ffmpeg 附带，跨平台） |
+| PCM → MP3 转码         | ffmpeg（唯一外部依赖）        |
 
 ---
 
@@ -44,6 +44,7 @@ src/
 **职责：** 启动检测与流程引导，不包含任何业务逻辑。
 
 **执行顺序：**
+
 1. 检测配置文件是否存在
 2. 不存在 → 调用 `runSetup()` 完成首次引导
 3. 存在 → 直接进入 CLI 路由
@@ -55,6 +56,7 @@ src/
 **职责：** 使用 `citty` 声明所有命令和参数，校验参数合法性，路由到对应的业务函数。不包含任何业务逻辑，不直接操作文件或网络。
 
 **包含：**
+
 - 主命令定义（`<input>`、`--play`、`--no-save`、`--output` 及所有 TTS 参数）
 - `config` 子命令定义（`--edit`、`--reset`）
 - 参数校验：`--no-save` 单独使用时报错退出
@@ -68,6 +70,7 @@ src/
 **职责：** 管理 `~/.config/tts-cli/config.toml` 的完整生命周期，提供三层合并后的配置对象供其他模块使用。
 
 **包含：**
+
 - `Config` interface — 配置文件的完整类型定义
 - `DEFAULTS` — 所有字段的默认值
 - `CONFIG_PATH` — 配置文件路径常量（跨平台）
@@ -84,6 +87,7 @@ src/
 **职责：** 在配置文件不存在时，引导用户完成环境检测和初始配置，写入配置文件后返回。
 
 **执行流程：**
+
 1. `intro` 欢迎信息
 2. 调用 `env.ts` 检测 ffmpeg，展示检测结果
 3. ffmpeg 未安装时展示安装指引，等待用户确认
@@ -100,6 +104,7 @@ src/
 **职责：** 检测系统中是否安装了 ffmpeg / ffplay，提供跨平台安装指引和运行时断言。
 
 **包含：**
+
 - `hasFfmpeg()` — 使用 `Bun.which('ffmpeg')` 检测，返回 `boolean`
 - `hasFfplay()` — 使用 `Bun.which('ffplay')` 检测，返回 `boolean`
 - `getInstallGuide()` — 根据 `process.platform` 返回当前平台的安装命令
@@ -107,6 +112,7 @@ src/
 - `assertFfmpeg()` — 检测不通过时打印错误并 `process.exit(1)`
 
 **调用时机：**
+
 - `setup.ts`：首次引导时主动展示检测结果
 - `tts.ts`：`runPlayMode()` 入口处断言
 
@@ -118,17 +124,20 @@ src/
 
 **包含：**
 
-*API 层：*
+_API 层：_
+
 - `buildHeaders(config)` — 构造鉴权 Header
 - `buildPayload(text, config, options)` — 构造完整请求 Body
 - `fetchTTS(text, config, options)` — 发起 HTTP Chunked 请求，返回 `Response`
 - `parseChunks(value)` — 含缓冲拼接的流式 JSON 解析，处理跨 chunk 边界
 
-*进度层：*
+_进度层：_
+
 - `createProgressBar(totalChars)` — 初始化 `cli-progress` SingleBar
 - `updateProgress(bar, json, ctx)` — 根据 chunk 类型更新进度条
 
-*模式层：*
+_模式层：_
+
 - `runDownloadMode(inputPath, config, args)` — 流式接收 → 累积 → 写入 MP3
 - `runPlayMode(inputPath, config, args)` — 流式接收 → ffplay stdin + 累积 → 等待播放结束 → 转码保存
 
@@ -139,16 +148,17 @@ src/
 **职责：** 读取输入文件，根据文件扩展名自动判断是否为 Markdown，提供给 TTS 模块使用。
 
 **包含：**
+
 - `detectMarkdown(filePath)` — 根据扩展名（`.md` / `.markdown`，大小写不敏感）返回 `boolean`
 - `readInputFile(filePath)` — 读取文件内容，返回 `{ text, disableMarkdownFilter }`
 - `resolveOutputPath(inputPath, outputOption?)` — 推导输出路径：有 `--output` 用指定值，否则同目录同名 `.mp3`
 
 **扩展名映射：**
 
-| 扩展名 | disableMarkdownFilter |
-|---|---|
-| `.md` / `.markdown` | `true` |
-| 其他 | `false` |
+| 扩展名              | disableMarkdownFilter |
+| ------------------- | --------------------- |
+| `.md` / `.markdown` | `true`                |
+| 其他                | `false`               |
 
 ---
 
@@ -157,6 +167,7 @@ src/
 **职责：** 封装 ffplay 和 ffmpeg 的进程调用，提供播放器启动和格式转码能力。
 
 **包含：**
+
 - `spawnFfplay(sampleRate)` — 启动 ffplay 子进程（stdin: pipe，stdout/stderr: ignore，`-f s16le -ar <rate> -nodisp -autoexit`），返回子进程实例
 - `convertPCMtoMP3(pcm, outputPath, sampleRate)` — 调用 ffmpeg 将 PCM buffer 转码为 MP3 文件，失败时抛出带 stderr 的错误
 
@@ -169,6 +180,7 @@ src/
 **职责：** 处理 `tts-cli config` 相关的所有业务逻辑和日志输出。
 
 **包含：**
+
 - `runConfigCommand(args)` — 处理 `--edit`、`--reset`、默认打印配置
 
 ---
@@ -178,6 +190,7 @@ src/
 **职责：** 处理文件转换的业务逻辑入口。
 
 **包含：**
+
 - `runConvert(input, args)` — 根据参数调用 `runDownloadMode` 或 `runPlayMode`
 
 ---
@@ -206,16 +219,16 @@ index.ts
 
 所有模块统一使用 `@clack/prompts` 输出人类可读信息（走 stderr），禁止直接使用 `console.log`。
 
-| 场景 | 使用方法 |
-|---|---|
-| 普通信息 | `log.info()` |
-| 成功提示 | `log.success()` |
-| 步骤提示 | `log.step()` |
-| 警告 | `log.warn()` |
-| 错误 | `log.error()` |
-| 带框块提示 | `note()` |
+| 场景         | 使用方法                          |
+| ------------ | --------------------------------- |
+| 普通信息     | `log.info()`                      |
+| 成功提示     | `log.success()`                   |
+| 步骤提示     | `log.step()`                      |
+| 警告         | `log.warn()`                      |
+| 错误         | `log.error()`                     |
+| 带框块提示   | `note()`                          |
 | 参数错误退出 | `log.error()` + `process.exit(1)` |
-| 进度条 | `cli-progress` SingleBar |
+| 进度条       | `cli-progress` SingleBar          |
 
 ## 架构约定
 
@@ -250,6 +263,7 @@ dir = "~/Downloads"
 ```
 
 **配置优先级（低 → 高）：**
+
 ```
 默认值 < ~/.config/tts-cli/config.toml < CLI 参数
 ```
@@ -341,9 +355,9 @@ tts-cli <input> [options]
 根据输入文件扩展名自动决定是否开启 Markdown 过滤，对用户完全透明：
 
 ```typescript
-const ext = path.extname(inputFile).toLowerCase()
-const isMarkdown = ext === '.md' || ext === '.markdown'
-const disableMarkdownFilter = isMarkdown
+const ext = path.extname(inputFile).toLowerCase();
+const isMarkdown = ext === '.md' || ext === '.markdown';
+const disableMarkdownFilter = isMarkdown;
 // .md / .markdown → 过滤 Markdown 语法（**bold** 读作"bold"）
 // .txt 等         → 当纯文本处理
 ```
@@ -413,12 +427,13 @@ Uses text character count as progress (from `sentence.text` field in API respons
 
 `resource_id` 通过 `X-Api-Resource-Id` Header 指定使用的 TTS 资源版本。
 
-| Resource ID | 说明 |
-|---|---|
-| `seed-tts-1.0` | 豆包语音合成模型1.0（字符版）|
-| `seed-tts-2.0` | 豆包语音合成模型2.0（默认，支持大多数音色）|
+| Resource ID    | 说明                                        |
+| -------------- | ------------------------------------------- |
+| `seed-tts-1.0` | 豆包语音合成模型1.0（字符版）               |
+| `seed-tts-2.0` | 豆包语音合成模型2.0（默认，支持大多数音色） |
 
 **重要说明：**
+
 - 不同 `resource_id` 对应不同的音色列表和 API 能力
 - `seed-tts-1.0` 仅支持"豆包语音合成模型1.0"的音色，使用不兼容音色会导致认证错误（code 45000000）
 - 默认 `resource_id` 为 `seed-tts-2.0`
@@ -444,10 +459,10 @@ bun build src/index.ts --compile --outfile tts-cli
 
 唯一外部依赖：**ffmpeg**（同时提供 `ffplay` 播放器和转码能力）
 
-| 功能 | 工具 | 来源 |
-|---|---|---|
-| 音频播放 | ffplay | ffmpeg 附带 |
-| PCM → MP3 转码 | ffmpeg | ffmpeg |
+| 功能           | 工具   | 来源        |
+| -------------- | ------ | ----------- |
+| 音频播放       | ffplay | ffmpeg 附带 |
+| PCM → MP3 转码 | ffmpeg | ffmpeg      |
 
 **ffplay 播放 PCM 的命令：**
 
@@ -470,11 +485,11 @@ Windows:  winget install ffmpeg
 
 **各场景依赖需求：**
 
-| 场景 | 需要 ffmpeg |
-|---|---|
-| 只下载 MP3（默认） | ❌ |
-| `--play` | ✅（ffplay 播放）|
-| `--play --output <path>` | ✅（ffplay 播放 + ffmpeg 转码）|
+| 场景                     | 需要 ffmpeg                     |
+| ------------------------ | ------------------------------- |
+| 只下载 MP3（默认）       | ❌                              |
+| `--play`                 | ✅（ffplay 播放）               |
+| `--play --output <path>` | ✅（ffplay 播放 + ffmpeg 转码） |
 
 **运行时报错提示：**
 

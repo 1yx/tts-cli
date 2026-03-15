@@ -5,6 +5,7 @@
 当前 tts-cli 使用 citty 子命令系统，虽然功能完整但对于一个单一用途的转换工具来说过于复杂。用户需要记住 `convert` 这个抽象概念，而实际上他们只是想把一个 Markdown 文件转换成 MP3。
 
 **当前结构：**
+
 ```
 tts-cli (main)
 ├── convert (subcommand, auto-injected)
@@ -15,6 +16,7 @@ tts-cli (main)
 ```
 
 **目标：**
+
 ```
 tts-cli <input> [options]
 ```
@@ -26,6 +28,7 @@ tts-cli <input> [options]
 ## Goals / Non-Goals
 
 **Goals:**
+
 - 移除子命令系统，使用直接的主命令
 - 移除 `config` 管理命令，让用户直接编辑配置文件
 - 简化首次运行体验，只问必需信息
@@ -33,6 +36,7 @@ tts-cli <input> [options]
 - 固定输出格式（play=PCM, save=MP3）
 
 **Non-Goals:**
+
 - 不添加新的配置管理方式（用户直接编辑文件）
 - 不保留 `--format` 参数（格式由使用场景固定）
 - 不保留 `convert` 子命令别名
@@ -46,6 +50,7 @@ tts-cli <input> [options]
 **决策：** 移除 citty 子命令，使用单一主命令
 
 **实现：**
+
 - 删除 `src/cli.ts`
 - 在 `src/index.ts` 中直接定义 citty 主命令
 - 移除子命令注入逻辑
@@ -59,11 +64,13 @@ tts-cli <input> [options]
 **决策：** 完全移除 config 子命令
 
 **实现：**
+
 - 删除 `src/commands/config.ts`
 - 用户通过文本编辑器直接修改 `~/.config/tts-cli/config.toml`
 - README 中说明配置文件路径和格式
 
 **理由：**
+
 - 减少代码维护负担
 - 用户已有编辑器，不需要额外的命令
 - 配置文件是 TOML 格式，易于编辑
@@ -75,10 +82,12 @@ tts-cli <input> [options]
 **决策：** Setup 只询问 app_id 和 token
 
 **实现：**
+
 - 修改 `src/setup.ts`，只调用两个 text prompt
 - 移除 voice 和 speed 的询问
 
 **理由：**
+
 - 加快首次运行流程
 - 这些配置有合理的默认值
 - 用户后续可以手动添加
@@ -90,16 +99,19 @@ tts-cli <input> [options]
 **决策：** 只保存与默认值不同的配置
 
 **实现：**
+
 - 修改 `src/config.ts` 中的 `saveConfig` 函数
 - 只保存 api.app_id 和 api.token（非空/非默认）
 - 如果用户后来手动添加了其他配置，也能正常工作
 
 **理由：**
+
 - 配置文件更清晰
 - 避免存储冗余的默认值
 - 更容易看出用户改了什么
 
 **示例：**
+
 ```toml
 # 简化后的配置文件
 [api]
@@ -112,12 +124,14 @@ token = "xxx"
 **决策：** 移除 `--format` 参数
 
 **实现：**
+
 - 从 CLI 参数定义中移除 `format`
 - 从 TTSOptions 接口中移除 `format`
 - `runPlayMode` 硬编码使用 `pcm`
 - `runDownloadMode` 硬编码使用 `mp3`
 
 **理由：**
+
 - Play 模式必须用 PCM 才能流式播放
 - MP3 是最通用的音频格式
 - 减少用户选择负担
@@ -131,6 +145,7 @@ token = "xxx"
 ### 风险：用户不知道如何修改配置
 
 **缓解：**
+
 - README 中清晰说明配置文件路径和格式
 - 首次运行时提示配置文件位置
 - 错误信息中包含配置文件路径
@@ -138,6 +153,7 @@ token = "xxx"
 ### 风险：移除子命令是破坏性变更
 
 **缓解：**
+
 - 在 README 中更新所有使用示例
 - 用户需要适应新的命令语法
 - 旧版本可能有缓存的问题（通过版本号管理解决）
@@ -145,6 +161,7 @@ token = "xxx"
 ### 风险：Setup 过于简化可能导致用户不知道如何修改其他配置
 
 **缓解：**
+
 - 在 README 中添加 "高级配置" 章节
 - 示例配置文件展示所有可配置项
 - 用户有需求时可以手动添加
@@ -170,6 +187,7 @@ token = "xxx"
 ### 回滚策略
 
 通过 git 可以随时回滚到使用子命令的版本。如果用户反馈强烈，可以考虑：
+
 - 添加 `convert` 作为 `tts-cli convert` 的别名
 - 添加 `tts-cli --config` 作为打开配置文件的快捷方式
 

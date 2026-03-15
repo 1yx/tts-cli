@@ -78,7 +78,8 @@
 - [x] 11.5 记录 seed-tts-1.0 与音色的兼容性
 
 **记录：**
-- 兼容音色格式：*_mars_bigtts, *_moon_bigtts
+
+- 兼容音色格式：_\_mars_bigtts, _\_moon_bigtts
 - 中文测试：zh_female_vv_mars_bigtts (Vivi) ✓
 - 英文测试：en_female_lauren_moon_bigtts (Lauren) ✓
 - 音色名称不匹配时会返回空文件（无错误提示）
@@ -91,7 +92,8 @@
 - [x] 12.4 记录 seed-tts-2.0 与音色的兼容性
 
 **记录：**
-- 兼容音色格式：*_uranus_bigtts, *_saturn_bigtts, *_jupiter_bigtts
+
+- 兼容音色格式：_\_uranus_bigtts, _\_saturn_bigtts, \*\_jupiter_bigtts
 - 中文测试：zh_female_vv_uranus_bigtts (Vivi 2.0) ✓
 - 英文测试：en_male_tim_uranus_bigtts (Tim) ✓
 - 默认 resource_id，支持大多数现代音色

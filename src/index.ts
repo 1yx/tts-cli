@@ -1,28 +1,31 @@
 #!/usr/bin/env bun
-import { existsSync } from 'fs'
-import { defineCommand, runMain } from 'citty'
-import { log, outro } from '@clack/prompts'
-import { CONFIG_PATH, loadConfig, saveConfig, DEFAULTS } from './config.js'
-import { runSetup } from './setup.js'
-import { runPlayMode, runDownloadMode, type TTSOptions } from './tts.js'
-import { assertFfmpeg } from './env.js'
+import { existsSync } from 'fs';
+import { defineCommand, runMain } from 'citty';
+import { log, outro } from '@clack/prompts';
+import { CONFIG_PATH, loadConfig, saveConfig, DEFAULTS } from './config.js';
+import { runSetup } from './setup.js';
+import { runPlayMode, runDownloadMode, type TTSOptions } from './tts.js';
+import { assertFfmpeg } from './env.js';
 
 // Parse CLI args for first-run setup
+/**
+ *
+ */
 function parseArgsForSetup(args: string[]): { appId?: string; token?: string } {
-  const result: { appId?: string; token?: string } = {}
+  const result: { appId?: string; token?: string } = {};
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
+    const arg = args[i];
     if (arg === '--app-id' || arg === '--appId') {
-      result.appId = args[i + 1]
-      i++
+      result.appId = args[i + 1];
+      i++;
     } else if (arg === '--token') {
-      result.token = args[i + 1]
-      i++
+      result.token = args[i + 1];
+      i++;
     }
   }
 
-  return result
+  return result;
 }
 
 // Main CLI command (no subcommands)
@@ -95,14 +98,17 @@ const mainCommand = defineCommand({
       description: 'Doubao token (for first-run setup)',
     },
   },
+  /**
+   *
+   */
   async run({ args }) {
-    const input = args.input as string
+    const input = String(args.input);
 
     if (args.play) {
-      assertFfmpeg()
+      assertFfmpeg();
     }
 
-    const config = await loadConfig()
+    const config = await loadConfig();
 
     const options: TTSOptions = {
       output: args.output,
@@ -110,30 +116,35 @@ const mainCommand = defineCommand({
       speed: args.speed ? parseInt(args.speed, 10) : undefined,
       volume: args.volume ? parseInt(args.volume, 10) : undefined,
       emotion: args.emotion,
-      emotionScale: args.emotionScale ? parseInt(args.emotionScale, 10) : undefined,
+      emotionScale: args.emotionScale
+        ? parseInt(args.emotionScale, 10)
+        : undefined,
       sampleRate: args.sampleRate ? parseInt(args.sampleRate, 10) : undefined,
       bitRate: args.bitRate ? parseInt(args.bitRate, 10) : undefined,
       lang: args.lang,
       silence: args.silence ? parseInt(args.silence, 10) : undefined,
       resourceId: args.resourceId,
-    }
+    };
 
     if (args.play) {
       await runPlayMode(input, config, {
         ...options,
         save: args.output !== undefined,
-      })
+      });
     } else {
-      await runDownloadMode(input, config, options)
+      await runDownloadMode(input, config, options);
     }
   },
-})
+});
 
+/**
+ *
+ */
 async function main() {
   // Check if config exists
   if (!existsSync(CONFIG_PATH)) {
     // First run - check if credentials provided via CLI
-    const cliArgs = parseArgsForSetup(process.argv.slice(2))
+    const cliArgs = parseArgsForSetup(process.argv.slice(2));
 
     if (cliArgs.appId && cliArgs.token) {
       // Save credentials directly
@@ -143,24 +154,26 @@ async function main() {
           app_id: cliArgs.appId,
           token: cliArgs.token,
         },
-      }
-      await saveConfig(config)
-      outro(`✓ Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`)
+      };
+      await saveConfig(config);
+      outro(
+        `✓ Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`
+      );
     } else {
       // Run interactive setup
-      await runSetup()
+      await runSetup();
     }
   }
 
   // Run main command
-  await runMain(mainCommand)
+  await runMain(mainCommand);
 }
 
 main().catch((err) => {
   if (err instanceof Error) {
-    log.error(err.message)
+    log.error(err.message);
   } else {
-    log.error(String(err))
+    log.error(String(err));
   }
-  process.exit(1)
-})
+  process.exit(1);
+});

@@ -8,10 +8,10 @@ schema: spec-driven
 # Injected into ALL artifact instructions
 context: |
   tts-cli — Markdown to MP3 CLI Tool
-  
+
   A command-line tool that converts Markdown (or plain text) documents to MP3 audio.
   Built with TypeScript + Bun.
-  
+
   Tech Stack:
   - Language: TypeScript
   - Runtime: Bun
@@ -22,7 +22,7 @@ context: |
   - TTS API: Doubao (ByteDance)
   - Audio Play: ffplay (ffmpeg)
   - PCM → MP3: ffmpeg
-  
+
   Directory Structure:
   - src/index.ts: Entry point, config check, command routing
   - src/cli.ts: citty command definitions
@@ -32,10 +32,10 @@ context: |
   - src/markdown.ts: Input file preprocessing
   - src/utils.ts: PCM → MP3 conversion (ffmpeg)
   - src/env.ts: Environment checks (ffmpeg detection)
-  
+
   Config Priority (low → high):
   Defaults < ~/.config/tts-cli/config.toml < CLI args
-  
+
   Coding Conventions:
   - Use TypeScript strict mode
   - Prefer async/await over callbacks

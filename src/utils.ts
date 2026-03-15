@@ -1,80 +1,131 @@
-import { spawn, type Subprocess } from 'child_process'
+import { spawn, type Subprocess } from 'child_process';
+import type { Writable } from 'stream';
 
-export interface SpawnFfplayOptions {
-  sampleRate?: number
-}
+/**
+ * Options for spawning ffplay.
+ */
+export type SpawnFfplayOptions = {
+  sampleRate?: number;
+};
 
+/**
+ * Spawn ffplay process for PCM audio playback.
+ */
 export function spawnFfplay(sampleRate: number = 24000): Subprocess {
-  const player = spawn('ffplay', [
-    '-f', 's16le',
-    '-ar', String(sampleRate),
-    '-nodisp',
-    '-autoexit',
-    '-',
-  ], {
-    stdio: ['pipe', 'ignore', 'ignore'],
-  })
+  const player = spawn(
+    'ffplay',
+    ['-f', 's16le', '-ar', String(sampleRate), '-nodisp', '-autoexit', '-'],
+    {
+      stdio: ['pipe', 'ignore', 'ignore'],
+    }
+  );
 
-  // Handle spawn errors
   player.on('error', (err) => {
-    console.error('ffplay spawn error:', err)
-  })
+    console.error('ffplay spawn error:', err);
+  });
 
-  return player
+  return player;
 }
 
+/**
+ * Write PCM data to ffmpeg stdin.
+ */
+function writePCMToStdin(
+  pcmData: Buffer,
+  stdin: Writable | null
+): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (!stdin) {
+      reject(new Error('ffmpeg stdin is not available'));
+      return;
+    }
+
+    stdin.on('error', (err: Error) => {
+      reject(new Error(`ffmpeg stdin error: ${err.message}`));
+    });
+
+    if (!stdin.write(pcmData)) {
+      stdin.once('drain', () => {
+        stdin.end();
+        resolve();
+      });
+    } else {
+      stdin.end();
+      resolve();
+    }
+  });
+}
+
+/**
+ * Create ffmpeg process for PCM to MP3 conversion.
+ */
+function spawnFFmpegProcess(
+  outputPath: string,
+  sampleRate: number
+): ReturnType<typeof spawn> {
+  return spawn(
+    'ffmpeg',
+    [
+      '-f',
+      's16le',
+      '-ar',
+      String(sampleRate),
+      '-ac',
+      '1',
+      '-y',
+      '-i',
+      'pipe:0',
+      outputPath,
+    ],
+    {
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }
+  );
+}
+
+/**
+ * Set up ffmpeg process event handlers.
+ */
+function setupFFmpegHandlers(
+  ffmpeg: ReturnType<typeof spawn>,
+  resolve: () => void,
+  reject: (err: Error) => void
+): void {
+  let stderr = '';
+
+  ffmpeg.stderr?.on('data', (data) => {
+    stderr += data.toString();
+  });
+
+  ffmpeg.on('close', (code) => {
+    if (code === 0) {
+      resolve();
+    } else {
+      reject(new Error(`ffmpeg failed (code ${code}): ${stderr}`));
+    }
+  });
+
+  ffmpeg.on('error', (err) => {
+    reject(new Error(`ffmpeg spawn error: ${err.message}`));
+  });
+}
+
+/**
+ * Convert PCM buffer to MP3 file using ffmpeg.
+ */
 export async function convertPCMtoMP3(
   pcm: Buffer,
   outputPath: string,
   sampleRate: number
 ): Promise<void> {
-  const ffmpeg = spawn('ffmpeg', [
-    '-f', 's16le',
-    '-ar', String(sampleRate),
-    '-ac', '1',
-    '-y',
-    '-i', 'pipe:0',
-    outputPath,
-  ], {
-    stdio: ['pipe', 'pipe', 'pipe'],
-  })
+  const ffmpeg = spawnFFmpegProcess(outputPath, sampleRate);
 
   return new Promise<void>((resolve, reject) => {
-    let stderr = ''
-    let stdout = ''
+    setupFFmpegHandlers(ffmpeg, resolve, reject);
 
-    ffmpeg.stdin.on('error', (err) => {
-      reject(new Error(`ffmpeg stdin error: ${err.message}`))
-    })
-
-    // Write PCM data to stdin
-    if (!ffmpeg.stdin.write(pcm)) {
-      // If write returns false, wait for drain
-      ffmpeg.stdin.once('drain', () => {
-        ffmpeg.stdin.end()
-      })
-    } else {
-      ffmpeg.stdin.end()
-    }
-
-    ffmpeg.stdout.on('data', (data) => {
-      stdout += data.toString()
-    })
-
-    ffmpeg.stderr.on('data', (data) => {
-      stderr += data.toString()
-    })
-
-    ffmpeg.on('close', (code) => {
-      if (code === 0) {
-        resolve()
-      } else {
-        reject(new Error(`ffmpeg failed (code ${code}): ${stderr}`))
-      }
-    })
-
-    ffmpeg.on('error', (err) => {
-      reject(new Error(`ffmpeg spawn error: ${err.message}`))
-    })
-  })
+    writePCMToStdin(pcm, ffmpeg.stdin).catch((err: Error) => {
+      ffmpeg.kill();
+      reject(err);
+    });
+  });
 }

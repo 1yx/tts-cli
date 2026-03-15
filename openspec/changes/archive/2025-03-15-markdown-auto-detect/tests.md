@@ -3,6 +3,7 @@
 ## 单元测试 `test/unit/markdown.test.ts`
 
 ### detectMarkdown()
+
 - [ ] `.md` → `true`
 - [ ] `.markdown` → `true`
 - [ ] `.MD`（大写）→ `true`
@@ -13,6 +14,7 @@
 - [ ] 路径包含目录（`docs/readme.md`）→ `true`，路径中的目录名不影响结果
 
 ### readInputFile()
+
 - [ ] `.md` 文件返回 `{ text: <内容>, disableMarkdownFilter: true }`
 - [ ] `.txt` 文件返回 `{ text: <内容>, disableMarkdownFilter: false }`
 - [ ] 文件不存在时抛出友好错误，不崩溃

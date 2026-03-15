@@ -7,11 +7,11 @@
 判断逻辑仅依赖扩展名，不做文件内容嗅探。简单、快速、无副作用。
 
 ```typescript
-import { extname } from 'path'
+import { extname } from 'path';
 
 export function detectMarkdown(filePath: string): boolean {
-  const ext = extname(filePath).toLowerCase()
-  return ext === '.md' || ext === '.markdown'
+  const ext = extname(filePath).toLowerCase();
+  return ext === '.md' || ext === '.markdown';
 }
 ```
 
@@ -21,10 +21,13 @@ export function detectMarkdown(filePath: string): boolean {
 
 ```typescript
 // src/markdown.ts
-export function readInputFile(filePath: string): { text: string; disableMarkdownFilter: boolean } {
-  const text = readFileSync(filePath, 'utf-8')
-  const disableMarkdownFilter = detectMarkdown(filePath)
-  return { text, disableMarkdownFilter }
+export function readInputFile(filePath: string): {
+  text: string;
+  disableMarkdownFilter: boolean;
+} {
+  const text = readFileSync(filePath, 'utf-8');
+  const disableMarkdownFilter = detectMarkdown(filePath);
+  return { text, disableMarkdownFilter };
 }
 ```
 
@@ -45,12 +48,12 @@ additions: {
 
 ### 4. 支持的扩展名
 
-| 扩展名 | isMarkdown | disable_markdown_filter |
-|---|---|---|
-| `.md` | `true` | `true` |
-| `.markdown` | `true` | `true` |
-| `.txt` | `false` | `false` |
-| 其他 | `false` | `false` |
+| 扩展名      | isMarkdown | disable_markdown_filter |
+| ----------- | ---------- | ----------------------- |
+| `.md`       | `true`     | `true`                  |
+| `.markdown` | `true`     | `true`                  |
+| `.txt`      | `false`    | `false`                 |
+| 其他        | `false`    | `false`                 |
 
 ## 文件结构
 

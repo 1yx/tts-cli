@@ -1,65 +1,82 @@
-import { intro, outro, text, password, isCancel, note, confirm, log } from '@clack/prompts'
-import { Config, DEFAULTS, saveConfig, CONFIG_PATH } from './config.js'
-import { hasFfmpeg, getInstallGuide } from './env.js'
+import {
+  intro,
+  outro,
+  text,
+  password,
+  isCancel,
+  note,
+  confirm,
+  log,
+} from '@clack/prompts';
+import { type Config, DEFAULTS, saveConfig, CONFIG_PATH } from './config.js';
+import { hasFfmpeg, getInstallGuide } from './env.js';
 
+/**
+ *
+ */
 export async function runSetup(): Promise<void> {
-  intro('Welcome to tts-cli 🎙️')
+  intro('Welcome to tts-cli 🎙️');
 
   // Phase 1: Environment check
-  log.step('[1/2] Checking environment dependencies...')
+  log.step('[1/2] Checking environment dependencies...');
 
   if (hasFfmpeg()) {
-    log.success('ffmpeg is installed')
+    log.success('ffmpeg is installed');
   } else {
-    log.warn('ffmpeg not detected')
-    log.message('tts-cli requires ffmpeg for audio playback (ffplay) and transcoding.')
-    log.message('Please install:')
+    log.warn('ffmpeg not detected');
+    log.message(
+      'tts-cli requires ffmpeg for audio playback (ffplay) and transcoding.'
+    );
+    log.message('Please install:');
 
-    note(getInstallGuide(), 'Installation Guide')
+    note(getInstallGuide(), 'Installation Guide');
 
     const shouldContinue = await confirm({
       message: 'Press Enter to continue after installation (or skip)...',
       initialValue: true,
-    })
+    });
 
     if (isCancel(shouldContinue)) {
-      process.exit(0)
+      process.exit(0);
     }
 
     // User can skip and continue, will error at runtime when using --play
   }
 
-  log.step('[2/2] Basic configuration...')
+  log.step('[2/2] Basic configuration...');
 
   // Get app_id
   const app_id = await text({
     message: 'Enter your Doubao app_id:',
     placeholder: 'your_app_id',
-  })
+  });
   if (isCancel(app_id)) {
-    process.exit(0)
+    process.exit(0);
   }
 
   // Get token
   const token = await password({
     message: 'Enter your Doubao token:',
-  })
+  });
   if (isCancel(token)) {
-    process.exit(0)
+    process.exit(0);
   }
 
   // Create minimal config (only api credentials)
+  // isCancel was checked above, so we know these are strings
+  const appIdValue = String(app_id);
+  const tokenValue = String(token);
   const config: Config = {
     ...DEFAULTS,
     api: {
-      app_id: app_id as string,
-      token: token as string,
+      app_id: appIdValue,
+      token: tokenValue,
     },
-  }
+  };
 
   // Save config
-  await saveConfig(config)
+  await saveConfig(config);
 
-  log.info(`Config saved to: ${CONFIG_PATH}`)
-  outro('✓ Setup complete')
+  log.info(`Config saved to: ${CONFIG_PATH}`);
+  outro('✓ Setup complete');
 }
