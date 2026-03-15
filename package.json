@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --compile --outfile tts-cli",
+    "build": "bun build src/index.ts --compile --outfile dest/tts-cli",
     "typecheck": "tsc --noEmit",
     "test": "bun test"
   },
