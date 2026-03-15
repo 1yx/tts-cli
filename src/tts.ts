@@ -11,7 +11,6 @@ const TTS_ENDPOINT = 'https://openspeech.bytedance.com/api/v3/tts/unidirectional
 export interface TTSOptions {
   output?: string
   voice?: string
-  model?: string
   speed?: number
   volume?: number
   emotion?: string
@@ -22,6 +21,7 @@ export interface TTSOptions {
   lang?: string
   silence?: number
   disableMarkdownFilter?: boolean
+  resourceId?: string
 }
 
 interface TTSChunk {
@@ -41,14 +41,15 @@ interface ProgressCtx {
   percent: number
 }
 
-export function buildHeaders(config: Config): Record<string, string> {
+export function buildHeaders(config: Config, overrides: TTSOptions = {}): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Api-App-Id': config.api.app_id,
     'X-Api-Access-Key': config.api.token,
   }
-  if (config.tts.resource_id) {
-    headers['X-Api-Resource-Id'] = config.tts.resource_id
+  const resourceId = overrides.resourceId ?? config.tts.resource_id
+  if (resourceId) {
+    headers['X-Api-Resource-Id'] = resourceId
   }
   return headers
 }
@@ -94,11 +95,6 @@ export function buildPayload(text: string, config: Config, overrides: TTSOptions
     reqParams.additions = JSON.stringify(additions)
   }
 
-  const model = overrides.model ?? config.tts.model
-  if (model) {
-    reqParams.model = model
-  }
-
   return {
     user: { uid: 'tts-cli' },
     req_params: reqParams,
@@ -106,7 +102,7 @@ export function buildPayload(text: string, config: Config, overrides: TTSOptions
 }
 
 async function fetchTTS(text: string, config: Config, options: TTSOptions = {}): Promise<Response> {
-  const headers = buildHeaders(config)
+  const headers = buildHeaders(config, options)
   const payload = buildPayload(text, config, options)
 
   const response = await fetch(TTS_ENDPOINT, {

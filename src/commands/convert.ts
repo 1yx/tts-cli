@@ -8,7 +8,6 @@ export interface ConvertArgs {
   play?: boolean
   noSave?: boolean
   voice?: string
-  model?: string
   speed?: number
   volume?: number
   emotion?: string
@@ -18,6 +17,7 @@ export interface ConvertArgs {
   bitRate?: number
   lang?: string
   silence?: number
+  resourceId?: string
 }
 
 function parseNumber(value: string | undefined): number | undefined {
@@ -32,7 +32,6 @@ export async function runConvert(input: string, args: ConvertArgs): Promise<void
   const options: TTSOptions = {
     output: args.output,
     voice: args.voice,
-    model: args.model,
     speed: parseNumber(args.speed),
     volume: parseNumber(args.volume),
     emotion: args.emotion,
@@ -42,6 +41,7 @@ export async function runConvert(input: string, args: ConvertArgs): Promise<void
     bitRate: parseNumber(args.bitRate),
     lang: args.lang,
     silence: parseNumber(args.silence),
+    resourceId: args.resourceId,
   }
 
   if (args.play) {

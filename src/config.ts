@@ -11,7 +11,6 @@ export interface Config {
   tts: {
     voice: string
     resource_id: string
-    model?: string
     speed: number
     volume: number
     sample_rate: number

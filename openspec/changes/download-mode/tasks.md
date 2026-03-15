@@ -37,7 +37,7 @@
 ## Phase 6: CLI 定义
 
 - [x] 6.1 创建 `src/cli.ts`，使用 `citty` 定义主命令
-- [x] 6.2 声明所有参数：`input`（positional）、`--output`、`--voice`、`--model`、`--speed`、`--volume`、`--emotion`、`--emotion-scale`、`--format`、`--sample-rate`、`--bit-rate`、`--lang`、`--silence`
+- [x] 6.2 声明所有参数：`input`（positional）、`--output`、`--voice`、`--resource-id`、`--speed`、`--volume`、`--emotion`、`--emotion-scale`、`--format`、`--sample-rate`、`--bit-rate`、`--lang`、`--silence`
 - [x] 6.3 修改 `src/index.ts`：加载配置，合并 CLI 参数，调用 `runDownloadMode()`
 
 ## Phase 7: 验证
@@ -52,3 +52,41 @@
 
 - [x] 8.1 通过 tests.md 创建测试
 - [x] 8.2 完成测试
+
+## Phase 9: CLI 参数扩展 - resource-id
+
+- [x] 9.1 在 src/cli.ts 添加 --resource-id 参数定义
+- [x] 9.2 更新 src/tts.ts 的 TTSOptions 接口包含 resourceId?: string
+- [x] 9.3 修改 buildHeaders() 支持 CLI override 的 resource_id
+- [x] 9.4 更新 src/commands/convert.ts 传递 resourceId 到 TTS 函数
+- [ ] 9.5 验证 --resource-id 参数正确覆盖配置文件值
+
+## Phase 10: 移除 model 参数
+
+- [x] 10.1 从 src/cli.ts 移除 --model 参数
+- [x] 10.2 从 src/tts.ts 的 TTSOptions 接口移除 model 字段
+- [x] 10.3 从 buildPayload() 移除 model 处理逻辑
+- [x] 10.4 从 src/commands/convert.ts 移除 model 字段
+- [x] 10.5 从 src/config.ts 的 Config 接口移除 model 字段
+
+## Phase 10: 手动调试 - seed-tts-1.0
+
+- [ ] 10.1 创建测试文本 test/fixtures/test-seed-tts-1.0.md
+- [ ] 10.2 使用 resource_id=seed-tts-1.0 测试中文 TTS
+- [ ] 10.3 使用 resource_id=seed-tts-1.0 测试英文 TTS
+- [ ] 10.4 验证 API 响应正常，MP3 文件正确生成
+- [ ] 10.5 记录 seed-tts-1.0 与音色的兼容性
+
+## Phase 11: 手动调试 - seed-tts-2.0
+
+- [ ] 11.1 使用默认 resource_id=seed-tts-2.0 测试中文 TTS
+- [ ] 11.2 使用 resource_id=seed-tts-2.0 测试英文 TTS
+- [ ] 11.3 验证 API 响应正常，MP3 文件正确生成
+- [ ] 11.4 记录 seed-tts-2.0 与音色的兼容性
+
+## Phase 12: 文档更新
+
+- [x] 12.1 更新 CLAUDE.md 说明不同 resource_id 的用途
+- [x] 12.2 移除 model 参数相关说明
+- [x] 12.3 更新 README.md 的 CLI 参数列表
+- [x] 12.4 更新配置文件示例移除 model 字段

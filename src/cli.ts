@@ -32,10 +32,6 @@ const cli = defineCommand({
       type: 'string',
       description: 'Voice name',
     },
-    model: {
-      type: 'string',
-      description: 'Model version (e.g. seed-tts-1.1)',
-    },
     speed: {
       type: 'string',
       description: 'Speech speed [-50, 100]',
@@ -71,6 +67,10 @@ const cli = defineCommand({
     silence: {
       type: 'string',
       description: 'Silence duration at end of sentence (ms)',
+    },
+    resourceId: {
+      type: 'string',
+      description: 'Resource ID (seed-tts-1.0, seed-tts-2.0, etc.)',
     },
   },
   subCommands: {

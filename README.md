@@ -99,7 +99,7 @@ Options:
   --no-save                 Don't save file (requires --play)
   --output <path>           Output file path
   --voice <name>            Voice name
-  --model <version>         Model version (e.g. seed-tts-1.1)
+  --resource-id <id>        Resource ID: seed-tts-1.0, seed-tts-2.0, etc.
   --speed <n>               Speech speed [-50, 100]
   --volume <n>              Volume [-50, 100]
   --emotion <type>          Emotion type (happy, sad, angry, etc.)

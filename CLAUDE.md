@@ -237,7 +237,7 @@ token  = "your_token"
 
 [tts]
 voice       = "zh_female_tianmei"
-model       = "seed-tts-1.1"
+resource_id = "seed-tts-2.0"
 speed       = 0        # [-50, 100]
 volume      = 0        # [-50, 100]
 sample_rate = 24000    # 8000/16000/22050/24000/32000/44100/48000
@@ -318,7 +318,7 @@ tts-cli <input> [options]
   --output <path>           输出文件路径（默认：同目录下同名 .mp3）
 
   --voice <name>            音色（覆盖配置文件）
-  --model <version>         模型版本，如 seed-tts-1.1
+  --resource-id <id>        资源ID：seed-tts-1.0, seed-tts-2.0 等（覆盖配置文件）
   --speed <n>               语速，范围 [-50, 100]，默认 0
   --volume <n>              音量，范围 [-50, 100]，默认 0
   --emotion <type>          情感，如 happy / angry / sad（部分音色支持）
@@ -409,6 +409,20 @@ Uses text character count as progress (from `sentence.text` field in API respons
   - 结束标志：`{ "code": 20000000, "message": "ok", "data": null }`
 - **--play 模式用 PCM**，其余模式用 MP3
 - `disable_markdown_filter` 根据文件扩展名自动设置，不暴露为 CLI 参数
+
+### Resource ID 说明
+
+`resource_id` 通过 `X-Api-Resource-Id` Header 指定使用的 TTS 资源版本。
+
+| Resource ID | 说明 |
+|---|---|
+| `seed-tts-1.0` | 豆包语音合成模型1.0（字符版）|
+| `seed-tts-2.0` | 豆包语音合成模型2.0（默认，支持大多数音色）|
+
+**重要说明：**
+- 不同 `resource_id` 对应不同的音色列表和 API 能力
+- `seed-tts-1.0` 仅支持"豆包语音合成模型1.0"的音色，使用不兼容音色会导致认证错误（code 45000000）
+- 默认 `resource_id` 为 `seed-tts-2.0`
 
 ---
 
