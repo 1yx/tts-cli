@@ -68,7 +68,7 @@ describe('Integration: download-mode', () => {
       const { runDownloadMode } = await import('../../src/tts.js')
       const { loadConfig } = await import('../../src/config.js')
 
-      const config = loadConfig()
+      const config = await loadConfig()
 
       await runDownloadMode(inputFile, config)
 
@@ -84,7 +84,7 @@ describe('Integration: download-mode', () => {
       const { runDownloadMode } = await import('../../src/tts.js')
       const { loadConfig } = await import('../../src/config.js')
 
-      const config = loadConfig()
+      const config = await loadConfig()
 
       // This test verifies the flow completes without errors
       // Progress bar updates are visual, but we can verify no errors thrown
@@ -100,7 +100,7 @@ describe('Integration: download-mode', () => {
       const { resolveOutputPath } = await import('../../src/markdown.js')
       const { loadConfig } = await import('../../src/config.js')
 
-      const config = loadConfig()
+      const config = await loadConfig()
       const expectedPath = resolveOutputPath(inputFile)
 
       await runDownloadMode(inputFile, config)
@@ -133,7 +133,7 @@ describe('Integration: download-mode', () => {
       const { runDownloadMode } = await import('../../src/tts.js')
       const { loadConfig } = await import('../../src/config.js')
 
-      const config = loadConfig()
+      const config = await loadConfig()
 
       await expect(runDownloadMode(inputFile, config)).rejects.toThrow('Invalid credentials')
       expect(existsSync(outputFile)).toBe(false)
@@ -148,7 +148,7 @@ describe('Integration: download-mode', () => {
       const { runDownloadMode } = await import('../../src/tts.js')
       const { loadConfig } = await import('../../src/config.js')
 
-      const config = loadConfig()
+      const config = await loadConfig()
       const nestedDir = join(testDir, 'nested', 'dir')
       const nestedInput = join(nestedDir, 'input.md')
       const nestedOutput = join(nestedDir, 'input.mp3')
@@ -168,7 +168,7 @@ describe('Integration: download-mode', () => {
       const { runDownloadMode } = await import('../../src/tts.js')
       const { loadConfig } = await import('../../src/config.js')
 
-      const config = loadConfig()
+      const config = await loadConfig()
 
       // Create initial file
       Bun.write(outputFile, 'old content')

@@ -10,7 +10,6 @@ const mockConfig: Config = {
   tts: {
     voice: 'zh_female_tianmei',
     resource_id: 'seed-tts-2.0',
-    model: 'seed-tts-1.1',
     speed: 0,
     volume: 0,
     sample_rate: 24000,
@@ -40,6 +39,12 @@ describe('buildHeaders()', () => {
     expect(headers['X-Api-Access-Key']).toBe(mockConfig.api.token)
     expect(headers['X-Api-Resource-Id']).toBe(mockConfig.tts.resource_id)
   })
+
+  it('allows override of resource_id via options', () => {
+    const headers = buildHeaders(mockConfig, { resourceId: 'seed-tts-1.0' })
+
+    expect(headers['X-Api-Resource-Id']).toBe('seed-tts-1.0')
+  })
 })
 
 describe('buildPayload()', () => {
@@ -57,12 +62,20 @@ describe('buildPayload()', () => {
     expect(withoutOverride.req_params.speaker).toBe(mockConfig.tts.voice)
   })
 
-  it('disable_markdown_filter is set according to传入值', () => {
+  it('disable_markdown_filter is only set when true (truthy)', () => {
+    // When true, addition should be set
     const enabled = buildPayload('test', mockConfig, { disableMarkdownFilter: true })
-    expect((enabled.req_params.additions as any).disable_markdown_filter).toBe(true)
+    expect(enabled.req_params.additions).toBeDefined()
+    expect(JSON.parse(enabled.req_params.additions as string).disable_markdown_filter).toBe(true)
 
+    // When false (falsy), the addition is not added at all (it's optional)
     const disabled = buildPayload('test', mockConfig, { disableMarkdownFilter: false })
-    expect((disabled.req_params.additions as any).disable_markdown_filter).toBe(false)
+    expect(disabled.req_params.additions).toBeUndefined()
+  })
+
+  it('additions is not present when no addition options are provided', () => {
+    const payload = buildPayload('test', mockConfig)
+    expect(payload.req_params.additions).toBeUndefined()
   })
 
   it('emotion field exists when provided, absent when undefined', () => {
@@ -73,13 +86,26 @@ describe('buildPayload()', () => {
     expect((withoutEmotion.req_params.audio_params as any).emotion).toBeUndefined()
   })
 
-  it('silence_duration defaults to 0', () => {
-    const payload = buildPayload('test', mockConfig)
-    expect((payload.req_params.additions as any).silence_duration).toBe(0)
+  it('silence_duration is set when provided', () => {
+    const payload = buildPayload('test', mockConfig, { silence: 500 })
+    expect(JSON.parse(payload.req_params.additions as string).silence_duration).toBe(500)
   })
 
   it('explicit_language is passed correctly', () => {
     const payload = buildPayload('test', mockConfig, { lang: 'en' })
-    expect((payload.req_params.additions as any).explicit_language).toBe('en')
+    expect(JSON.parse(payload.req_params.additions as string).explicit_language).toBe('en')
+  })
+
+  it('can combine multiple additions', () => {
+    const payload = buildPayload('test', mockConfig, {
+      disableMarkdownFilter: true,
+      lang: 'ja',
+      silence: 1000,
+    })
+    const additions = JSON.parse(payload.req_params.additions as string)
+
+    expect(additions.disable_markdown_filter).toBe(true)
+    expect(additions.explicit_language).toBe('ja')
+    expect(additions.silence_duration).toBe(1000)
   })
 })
