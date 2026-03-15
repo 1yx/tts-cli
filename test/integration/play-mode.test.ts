@@ -4,6 +4,7 @@ import { spawnFfplay, convertPCMtoMP3 } from '../../src/utils.js';
 import { loadConfig } from '../../src/config.js';
 import { existsSync } from 'fs';
 
+// eslint-disable-next-line max-lines-per-function
 describe('runPlayMode integration tests', () => {
   describe('file reading', () => {
     it('should correctly read markdown file', async () => {

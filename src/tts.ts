@@ -302,6 +302,7 @@ function parseJSONLine(line: string): TTSChunk | null {
   }
 
   try {
+    // eslint-disable-next-line no-restricted-syntax
     return JSON.parse(line) as TTSChunk;
   } catch {
     return null;

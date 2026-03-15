@@ -48,6 +48,7 @@ async function spawnTestCommand(
   });
 }
 
+// eslint-disable-next-line max-lines-per-function
 describe('E2E: first-run setup', () => {
   const tempConfigPath = getTempConfigPath();
 

@@ -279,6 +279,24 @@ export default [
     },
   },
   {
+    // Exclude eslint.config.mjs from TypeScript parser since it's not in tsconfig
+    files: ['eslint.config.mjs'],
+    languageOptions: {
+      parserOptions: {
+        project: false,
+      },
+    },
+    rules: {
+      // Disable type-aware rules that require parserOptions.project
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-floating-promises': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/await-thenable': 'off',
+      '@typescript-eslint/require-await': 'off',
+    },
+  },
+  {
     // Relax quality limits in scripts/ — these are one-off utilities and debug tools,
     // not production code paths. Core safety rules (types, async, imports) still apply.
     files: ['scripts/**/*.{js,mjs,cjs,ts,mts,cts}'],

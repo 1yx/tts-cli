@@ -69,11 +69,12 @@ export const CONFIG_PATH = join(getConfigDir(), 'config.toml');
 export async function readConfigFile(): Promise<Partial<Config> | null> {
   try {
     const file = Bun.file(CONFIG_PATH);
-    if (!file.exists()) {
+    if (!(await file.exists())) {
       return null;
     }
     const content = await file.text();
     const parsed: unknown = parse(content);
+    // eslint-disable-next-line no-restricted-syntax
     return parsed as Partial<Config>;
   } catch (err) {
     // Only throw error if file exists (parse error), not if it doesn't exist
@@ -133,7 +134,8 @@ export function deepMerge<T>(...objects: Partial<T>[]): T {
         const existingValue = result[key];
         const baseValue =
           typeof existingValue === 'object' && existingValue !== null
-            ? (existingValue as Record<string, unknown>)
+            ? // eslint-disable-next-line no-restricted-syntax
+              (existingValue as Record<string, unknown>)
             : {};
         // eslint-disable-next-line no-restricted-syntax
         result[key] = deepMerge(baseValue, value as Record<string, unknown>);

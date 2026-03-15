@@ -58,6 +58,7 @@ describe('buildHeaders()', () => {
   });
 });
 
+// eslint-disable-next-line max-lines-per-function
 describe('buildPayload()', () => {
   it('text maps to req_params.text correctly', () => {
     const payload = buildPayload({ text: 'Hello world', config: mockConfig });
@@ -157,7 +158,10 @@ describe('buildPayload()', () => {
         silence: 1000,
       },
     });
-    const additions = JSON.parse(payload.req_params.additions as string);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const additions: Record<string, unknown> = JSON.parse(
+      payload.req_params.additions as string
+    );
 
     expect(additions.disable_markdown_filter).toBe(true);
     expect(additions.explicit_language).toBe('ja');

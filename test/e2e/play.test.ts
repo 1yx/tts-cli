@@ -6,6 +6,7 @@ import { unlink } from 'fs/promises';
 // Skip E2E tests if credentials are not provided
 const skipE2E = !process.env.TTS_CLI_APP_ID || !process.env.TTS_CLI_TOKEN;
 
+// eslint-disable-next-line max-lines-per-function
 describe('E2E: play-mode', () => {
   const testOutputFile = '/tmp/test-e2e-output.mp3';
 

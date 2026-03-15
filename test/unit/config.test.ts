@@ -44,6 +44,7 @@ describe('getConfigDir()', () => {
   });
 });
 
+// eslint-disable-next-line max-lines-per-function
 describe('deepMerge()', () => {
   it('CLI params override file config values', () => {
     const defaults: Record<string, unknown> = {

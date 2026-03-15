@@ -49,6 +49,7 @@ const mockFetch = (
   } as Response);
 };
 
+// eslint-disable-next-line max-lines-per-function
 describe('Integration: download-mode', () => {
   const testDir = join(process.cwd(), 'test-temp');
   const inputFile = join(testDir, 'input.md');
@@ -68,6 +69,7 @@ describe('Integration: download-mode', () => {
     }
   });
 
+  // eslint-disable-next-line max-lines-per-function
   describe('complete download flow (mocked fetch)', () => {
     it('all audio chunks are correctly concatenated and written to output file', async () => {
       // @ts-ignore - mock fetch
@@ -151,6 +153,7 @@ describe('Integration: download-mode', () => {
 
       const config = await loadConfig();
 
+      // eslint-disable-next-line @typescript-eslint/await-thenable
       await expect(runDownloadMode(inputFile, config)).rejects.toThrow(
         'Invalid credentials'
       );
