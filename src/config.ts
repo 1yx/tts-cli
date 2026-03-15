@@ -1,3 +1,4 @@
+import { existsSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 import { parse, stringify } from 'smol-toml'
@@ -65,7 +66,11 @@ export async function readConfigFile(): Promise<Partial<Config> | null> {
     const content = await file.text()
     return parse(content) as Partial<Config>
   } catch (err) {
-    throw new Error(`Failed to parse config file: ${CONFIG_PATH}\nError: ${err}`)
+    // Only throw error if file exists (parse error), not if it doesn't exist
+    if (existsSync(CONFIG_PATH)) {
+      throw new Error(`Failed to parse config file: ${CONFIG_PATH}\nError: ${err}`)
+    }
+    return null
   }
 }
 

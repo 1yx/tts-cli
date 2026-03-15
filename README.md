@@ -35,6 +35,9 @@ bun run build
 # First run - interactive setup (asks for app_id and token only)
 ./tts-cli input.md
 
+# First run - skip setup by providing credentials directly
+./tts-cli input.md --app-id "your_app_id" --token "your_token"
+
 # Convert with default settings
 ./tts-cli input.md
 
@@ -133,6 +136,10 @@ Options:
   --bit-rate <n>            Bit rate for MP3
   --lang <code>             Language: zh-cn, en, ja, es-mx, id, pt-br
   --silence <ms>            Sentence end silence duration [0-30000]
+
+Setup options (first run only):
+  --app-id <id>             Doubao app_id (skip interactive setup)
+  --token <token>           Doubao token (skip interactive setup)
 ```
 
 ## Examples

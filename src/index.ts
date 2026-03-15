@@ -2,10 +2,28 @@
 import { existsSync } from 'fs'
 import { defineCommand, runMain } from 'citty'
 import { log } from '@clack/prompts'
-import { CONFIG_PATH, loadConfig } from './config.js'
+import { CONFIG_PATH, loadConfig, saveConfig, DEFAULTS } from './config.js'
 import { runSetup } from './setup.js'
 import { runPlayMode, runDownloadMode, type TTSOptions } from './tts.js'
 import { assertFfmpeg } from './env.js'
+
+// Parse CLI args for first-run setup
+function parseArgsForSetup(args: string[]): { appId?: string; token?: string } {
+  const result: { appId?: string; token?: string } = {}
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    if (arg === '--app-id' || arg === '--appId') {
+      result.appId = args[i + 1]
+      i++
+    } else if (arg === '--token') {
+      result.token = args[i + 1]
+      i++
+    }
+  }
+
+  return result
+}
 
 // Main CLI command (no subcommands)
 const mainCommand = defineCommand({
@@ -68,6 +86,14 @@ const mainCommand = defineCommand({
       type: 'string',
       description: 'Resource ID (seed-tts-1.0, seed-tts-2.0, etc.)',
     },
+    appId: {
+      type: 'string',
+      description: 'Doubao app_id (for first-run setup)',
+    },
+    token: {
+      type: 'string',
+      description: 'Doubao token (for first-run setup)',
+    },
   },
   async run({ args }) {
     const input = args.input as string
@@ -106,8 +132,24 @@ const mainCommand = defineCommand({
 async function main() {
   // Check if config exists
   if (!existsSync(CONFIG_PATH)) {
-    // First run - run setup
-    await runSetup()
+    // First run - check if credentials provided via CLI
+    const cliArgs = parseArgsForSetup(process.argv.slice(2))
+
+    if (cliArgs.appId && cliArgs.token) {
+      // Save credentials directly
+      const config = {
+        ...DEFAULTS,
+        api: {
+          app_id: cliArgs.appId,
+          token: cliArgs.token,
+        },
+      }
+      await saveConfig(config)
+      log.info(`Config saved to: ${CONFIG_PATH}`)
+    } else {
+      // Run interactive setup
+      await runSetup()
+    }
   }
 
   // Run main command
