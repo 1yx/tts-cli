@@ -3,7 +3,7 @@ import { mkdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // Mock fetch globally
-const mockFetch = async (
+const mockFetch = (
   input: RequestInfo | URL,
   _init?: RequestInit
 ): Promise<Response> => {
@@ -41,12 +41,12 @@ const mockFetch = async (
     },
   });
 
-  return {
+  return Promise.resolve({
     ok: true,
     status: 200,
     statusText: 'OK',
     body: stream,
-  } as Response;
+  } as Response);
 };
 
 describe('Integration: download-mode', () => {
@@ -54,11 +54,11 @@ describe('Integration: download-mode', () => {
   const inputFile = join(testDir, 'input.md');
   const outputFile = join(testDir, 'input.mp3');
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Create test directory
     mkdirSync(testDir, { recursive: true });
     // Create test input file
-    Bun.write(inputFile, '你好，世界');
+    await Bun.write(inputFile, '你好，世界');
   });
 
   afterEach(() => {
@@ -117,7 +117,7 @@ describe('Integration: download-mode', () => {
     });
 
     it('API error with non-zero code throws error containing message, no file written', async () => {
-      const errorFetch = async (
+      const errorFetch = (
         _input: RequestInfo | URL,
         _init?: RequestInit
       ): Promise<Response> => {
@@ -135,12 +135,12 @@ describe('Integration: download-mode', () => {
           },
         });
 
-        return {
+        return Promise.resolve({
           ok: true,
           status: 200,
           statusText: 'OK',
           body: stream,
-        } as Response;
+        } as Response);
       };
 
       // @ts-ignore - mock fetch
@@ -172,7 +172,7 @@ describe('Integration: download-mode', () => {
       const nestedOutput = join(nestedDir, 'input.mp3');
 
       mkdirSync(nestedDir, { recursive: true });
-      Bun.write(nestedInput, 'test');
+      await Bun.write(nestedInput, 'test');
 
       await runDownloadMode(nestedInput, config);
 
@@ -189,7 +189,7 @@ describe('Integration: download-mode', () => {
       const config = await loadConfig();
 
       // Create initial file
-      Bun.write(outputFile, 'old content');
+      await Bun.write(outputFile, 'old content');
 
       await runDownloadMode(inputFile, config);
 

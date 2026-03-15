@@ -7,9 +7,10 @@ async function main() {
   console.log('CONFIG_PATH:', CONFIG_PATH);
 
   const file = Bun.file(CONFIG_PATH);
-  console.log('Config file exists:', file.exists());
+  const fileExists = await file.exists();
+  console.log('Config file exists:', fileExists);
 
-  if (file.exists()) {
+  if (fileExists) {
     const rawContent = await file.text();
     console.log('Raw config file content:');
     console.log(rawContent);

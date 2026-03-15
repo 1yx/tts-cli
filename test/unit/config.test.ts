@@ -46,9 +46,15 @@ describe('getConfigDir()', () => {
 
 describe('deepMerge()', () => {
   it('CLI params override file config values', () => {
-    const defaults = { voice: 'default-voice', speed: 0 };
-    const fileConfig = { voice: 'file-voice', speed: 10 };
-    const cliOverrides = { voice: 'cli-voice' };
+    const defaults: Record<string, unknown> = {
+      voice: 'default-voice',
+      speed: 0,
+    };
+    const fileConfig: Record<string, unknown> = {
+      voice: 'file-voice',
+      speed: 10,
+    };
+    const cliOverrides: Record<string, unknown> = { voice: 'cli-voice' };
 
     const result = deepMerge(defaults, fileConfig, cliOverrides);
 
@@ -57,9 +63,18 @@ describe('deepMerge()', () => {
   });
 
   it('undefined CLI params preserve file config values', () => {
-    const defaults = { voice: 'default-voice', speed: 0 };
-    const fileConfig = { voice: 'file-voice', speed: 10 };
-    const cliOverrides = { voice: 'cli-voice', speed: undefined };
+    const defaults: Record<string, unknown> = {
+      voice: 'default-voice',
+      speed: 0,
+    };
+    const fileConfig: Record<string, unknown> = {
+      voice: 'file-voice',
+      speed: 10,
+    };
+    const cliOverrides: Record<string, unknown> = {
+      voice: 'cli-voice',
+      speed: undefined,
+    };
 
     const result = deepMerge(defaults, fileConfig, cliOverrides);
 
@@ -68,9 +83,13 @@ describe('deepMerge()', () => {
   });
 
   it('missing file config fields fall back to defaults', () => {
-    const defaults = { voice: 'default-voice', speed: 0, volume: 50 };
-    const fileConfig = { voice: 'file-voice' };
-    const cliOverrides = {};
+    const defaults: Record<string, unknown> = {
+      voice: 'default-voice',
+      speed: 0,
+      volume: 50,
+    };
+    const fileConfig: Record<string, unknown> = { voice: 'file-voice' };
+    const cliOverrides: Record<string, unknown> = {};
 
     const result = deepMerge(defaults, fileConfig, cliOverrides);
 
@@ -80,14 +99,24 @@ describe('deepMerge()', () => {
   });
 
   it('correct priority: CLI > file > defaults', () => {
-    const defaults = { api: { app_id: 'default-id', token: 'default-token' } };
-    const fileConfig = { api: { app_id: 'file-id', token: 'file-token' } };
-    const cliOverrides = { api: { app_id: 'cli-id' } };
+    const defaults: Record<string, unknown> = {
+      api: { app_id: 'default-id', token: 'default-token' },
+    };
+    const fileConfig: Record<string, unknown> = {
+      api: { app_id: 'file-id', token: 'file-token' },
+    };
+    const cliOverrides: Record<string, unknown> = {
+      api: { app_id: 'cli-id' },
+    };
 
     const result = deepMerge(defaults, fileConfig, cliOverrides);
 
-    expect(result.api.app_id).toBe('cli-id');
-    expect(result.api.token).toBe('file-token');
+    expect((result.api as { app_id: string; token: string }).app_id).toBe(
+      'cli-id'
+    );
+    expect((result.api as { app_id: string; token: string }).token).toBe(
+      'file-token'
+    );
   });
 });
 

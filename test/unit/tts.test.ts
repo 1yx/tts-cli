@@ -2,6 +2,17 @@ import { describe, it, expect } from 'bun:test';
 import type { Config } from '../../src/config.js';
 import { buildHeaders, buildPayload } from '../../src/tts.js';
 
+// Type for audio_params with optional emotion fields
+type AudioParams = {
+  format: string;
+  sample_rate: number;
+  speech_rate: number;
+  loudness_rate: number;
+  bit_rate?: number;
+  emotion?: string;
+  emotion_scale?: number;
+};
+
 const mockConfig: Config = {
   api: {
     app_id: 'test-app-id',
@@ -101,14 +112,16 @@ describe('buildPayload()', () => {
       config: mockConfig,
       overrides: { emotion: 'happy' },
     });
-    expect((withEmotion.req_params.audio_params as any).emotion).toBe('happy');
+    expect((withEmotion.req_params.audio_params as AudioParams).emotion).toBe(
+      'happy'
+    );
 
     const withoutEmotion = buildPayload({
       text: 'test',
       config: mockConfig,
     });
     expect(
-      (withoutEmotion.req_params.audio_params as any).emotion
+      (withoutEmotion.req_params.audio_params as AudioParams).emotion
     ).toBeUndefined();
   });
 

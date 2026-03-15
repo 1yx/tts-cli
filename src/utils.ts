@@ -1,4 +1,4 @@
-import { spawn, type Subprocess } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import type { Writable } from 'stream';
 
 /**
@@ -11,7 +11,7 @@ export type SpawnFfplayOptions = {
 /**
  * Spawn ffplay process for PCM audio playback.
  */
-export function spawnFfplay(sampleRate: number = 24000): Subprocess {
+export function spawnFfplay(sampleRate: number = 24000): ChildProcess {
   const player = spawn(
     'ffplay',
     ['-f', 's16le', '-ar', String(sampleRate), '-nodisp', '-autoexit', '-'],
