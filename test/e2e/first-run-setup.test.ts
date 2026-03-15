@@ -137,10 +137,11 @@ describe("E2E: first-run setup", () => {
         testToken,
       ])
 
-      // Should mention config path in output (log.info goes to stdout)
+      // Should mention config path and next steps in output
       const output = result.stdout + result.stderr
-      expect(output).toContain("Config saved")
       expect(output).toContain(CONFIG_PATH)
+      expect(output).toContain("Credentials saved")
+      expect(output).toContain("Next time")
     })
   })
 

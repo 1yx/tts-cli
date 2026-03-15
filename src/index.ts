@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 import { existsSync } from 'fs'
 import { defineCommand, runMain } from 'citty'
-import { log } from '@clack/prompts'
+import { log, outro } from '@clack/prompts'
 import { CONFIG_PATH, loadConfig, saveConfig, DEFAULTS } from './config.js'
 import { runSetup } from './setup.js'
 import { runPlayMode, runDownloadMode, type TTSOptions } from './tts.js'
@@ -145,7 +145,7 @@ async function main() {
         },
       }
       await saveConfig(config)
-      log.info(`Config saved to: ${CONFIG_PATH}`)
+      outro(`✓ Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`)
     } else {
       // Run interactive setup
       await runSetup()
