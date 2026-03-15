@@ -6,17 +6,16 @@ export interface ConvertArgs {
   input?: string
   output?: string
   play?: boolean
-  noSave?: boolean
   voice?: string
-  speed?: number
-  volume?: number
+  speed?: string
+  volume?: string
   emotion?: string
-  emotionScale?: number
+  emotionScale?: string
   format?: string
-  sampleRate?: number
-  bitRate?: number
+  sampleRate?: string
+  bitRate?: string
   lang?: string
-  silence?: number
+  silence?: string
   resourceId?: string
 }
 
@@ -45,9 +44,10 @@ export async function runConvert(input: string, args: ConvertArgs): Promise<void
   }
 
   if (args.play) {
+    // Save only if output is explicitly provided
     await runPlayMode(input, config, {
       ...options,
-      save: !args.noSave,
+      save: args.output !== undefined,
     })
   } else {
     await runDownloadMode(input, config, options)

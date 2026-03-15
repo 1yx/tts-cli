@@ -19,11 +19,6 @@ const convertCommand = defineCommand({
       description: 'Play audio while converting',
       default: false,
     },
-    noSave: {
-      type: 'boolean',
-      description: 'Do not save file (requires --play)',
-      default: false,
-    },
     output: {
       type: 'string',
       description: 'Output file path',
@@ -74,10 +69,7 @@ const convertCommand = defineCommand({
     },
   },
   run({ args }) {
-    if (args.noSave && !args.play) {
-      throw new Error('--no-save requires --play')
-    }
-    return runConvert(args.input, args)
+    return runConvert(args.input, args as Parameters<typeof runConvert>[1])
   },
 })
 

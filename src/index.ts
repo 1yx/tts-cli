@@ -18,7 +18,8 @@ async function main() {
 
   // If no subcommand provided, default to convert
   // Inject 'convert' as first argument if not a subcommand
-  if (args.length > 0 && !args[0].startsWith('-') && args[0] !== 'config') {
+  const knownSubcommands = ['convert', 'config']
+  if (args.length > 0 && !args[0].startsWith('-') && !knownSubcommands.includes(args[0])) {
     // First arg is input file, not a command - prepend 'convert'
     process.argv.splice(2, 0, 'convert')
   } else if (args.length === 0 || args[0].startsWith('-')) {

@@ -258,6 +258,7 @@ export async function runPlayMode(
   const decoder = new TextDecoder()
 
   const ffplay = spawnFfplay(sampleRate)
+
   const audioChunks: Uint8Array[] = []
   const bar = createProgressBar(text.length)
   const ctx: ProgressCtx = {
@@ -269,10 +270,42 @@ export async function runPlayMode(
 
   let buffer = ''
 
+  // Check if ffplay stdin is writable
+  if (!ffplay.stdin) {
+    throw new Error('ffplay stdin is not available')
+  }
+
+  // Track if we need to wait for drain before next write
+  let needDrain = false
+
+  // Set up close/error handlers BEFORE streaming starts
+  const closePromise = new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      ffplay.kill()
+      reject(new Error('ffplay close timeout - process killed'))
+    }, 10000)
+
+    ffplay.on('close', (code: number | null) => {
+      clearTimeout(timeout)
+      if (code && code !== 0) {
+        reject(new Error(`ffplay exited with code ${code}`))
+      } else {
+        resolve()
+      }
+    })
+
+    ffplay.on('error', (err: Error) => {
+      clearTimeout(timeout)
+      reject(new Error(`ffplay error: ${err.message}`))
+    })
+  })
+
   try {
     while (true) {
       const { done, value } = await reader.read()
-      if (done) break
+      if (done) {
+        break
+      }
 
       buffer += decoder.decode(value, { stream: true })
 
@@ -283,14 +316,31 @@ export async function runPlayMode(
         if (!line.trim()) continue
         try {
           const json = JSON.parse(line) as TTSChunk
+
+          // First handle the chunk (for progress tracking and audioChunks accumulation)
           const finished = handleChunk(json, audioChunks, bar, ctx)
 
+          // Then write to ffplay (if there's audio data)
           if (json.data) {
             const chunk = Uint8Array.from(atob(json.data), c => c.charCodeAt(0))
-            ffplay.stdin?.write(chunk)
+
+            // Wait for drain if previous write returned false
+            if (needDrain) {
+              await new Promise<void>((resolve) => {
+                ffplay.stdin!.once('drain', () => resolve())
+              })
+              needDrain = false
+            }
+
+            // Write chunk, return false means buffer is full
+            if (!ffplay.stdin.write(chunk)) {
+              needDrain = true
+            }
           }
 
-          if (finished) break
+          if (finished) {
+            break
+          }
         } catch (e) {
           if (e instanceof SyntaxError) {
             continue
@@ -305,12 +355,24 @@ export async function runPlayMode(
     throw err
   }
 
-  await new Promise<void>((resolve) => {
-    ffplay.on('close', () => resolve())
-  })
+  // Wait for any pending writes to drain before closing
+  if (needDrain) {
+    await new Promise<void>((resolve) => {
+      ffplay.stdin!.once('drain', () => resolve())
+    })
+  }
+
+  // Close ffplay stdin and wait for playback to finish
+  ffplay.stdin.end()
+  await closePromise
 
   if (args.save !== false) {
     const totalLength = audioChunks.reduce((sum, chunk) => sum + chunk.length, 0)
+
+    if (totalLength === 0) {
+      throw new Error('No audio data received from TTS API')
+    }
+
     const merged = new Uint8Array(totalLength)
     let offset = 0
     for (const chunk of audioChunks) {

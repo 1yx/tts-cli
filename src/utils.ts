@@ -5,16 +5,22 @@ export interface SpawnFfplayOptions {
 }
 
 export function spawnFfplay(sampleRate: number = 24000): Subprocess {
-  return spawn('ffplay', [
+  const player = spawn('ffplay', [
     '-f', 's16le',
     '-ar', String(sampleRate),
-    '-ac', '1',
     '-nodisp',
     '-autoexit',
     '-',
   ], {
     stdio: ['pipe', 'ignore', 'ignore'],
   })
+
+  // Handle spawn errors
+  player.on('error', (err) => {
+    console.error('ffplay spawn error:', err)
+  })
+
+  return player
 }
 
 export async function convertPCMtoMP3(
@@ -35,9 +41,25 @@ export async function convertPCMtoMP3(
 
   return new Promise<void>((resolve, reject) => {
     let stderr = ''
+    let stdout = ''
 
-    ffmpeg.stdin.write(pcm)
-    ffmpeg.stdin.end()
+    ffmpeg.stdin.on('error', (err) => {
+      reject(new Error(`ffmpeg stdin error: ${err.message}`))
+    })
+
+    // Write PCM data to stdin
+    if (!ffmpeg.stdin.write(pcm)) {
+      // If write returns false, wait for drain
+      ffmpeg.stdin.once('drain', () => {
+        ffmpeg.stdin.end()
+      })
+    } else {
+      ffmpeg.stdin.end()
+    }
+
+    ffmpeg.stdout.on('data', (data) => {
+      stdout += data.toString()
+    })
 
     ffmpeg.stderr.on('data', (data) => {
       stderr += data.toString()
@@ -49,6 +71,10 @@ export async function convertPCMtoMP3(
       } else {
         reject(new Error(`ffmpeg failed (code ${code}): ${stderr}`))
       }
+    })
+
+    ffmpeg.on('error', (err) => {
+      reject(new Error(`ffmpeg spawn error: ${err.message}`))
     })
   })
 }

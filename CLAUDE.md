@@ -157,7 +157,7 @@ src/
 **职责：** 封装 ffplay 和 ffmpeg 的进程调用，提供播放器启动和格式转码能力。
 
 **包含：**
-- `spawnFfplay(sampleRate)` — 启动 ffplay 子进程（stdin: pipe，stdout/stderr: ignore，`-nodisp -autoexit`），返回子进程实例
+- `spawnFfplay(sampleRate)` — 启动 ffplay 子进程（stdin: pipe，stdout/stderr: ignore，`-f s16le -ar <rate> -nodisp -autoexit`），返回子进程实例
 - `convertPCMtoMP3(pcm, outputPath, sampleRate)` — 调用 ffmpeg 将 PCM buffer 转码为 MP3 文件，失败时抛出带 stderr 的错误
 
 **注意：** `sampleRate` 参数必须与 API 请求中的 `sample_rate` 保持一致，两者均来自 `config.tts.sample_rate`。
@@ -302,9 +302,9 @@ Welcome to tts-cli 🎙️
 ### 基础用法
 
 ```bash
-tts-cli <input>              # 转换文件，保存 MP3
-tts-cli <input> --play       # 边合成边播放，播完后保存 MP3
-tts-cli <input> --play --no-save  # 只播放，不保存
+tts-cli <input>                    # 转换文件，保存 MP3
+tts-cli <input> --play             # 边合成边播放，不保存
+tts-cli <input> --play --output <path>   # 播放完成后保存到指定路径
 ```
 
 ### 完整参数列表
@@ -314,8 +314,7 @@ tts-cli <input> [options]
 
 参数：
   --play                    边合成边播放（使用 PCM 流 + ffplay）
-  --no-save                 不保存文件（必须配合 --play 使用）
-  --output <path>           输出文件路径（默认：同目录下同名 .mp3）
+  --output <path>           输出文件路径（指定时才保存）
 
   --voice <name>            音色（覆盖配置文件）
   --resource-id <id>        资源ID：seed-tts-1.0, seed-tts-2.0 等（覆盖配置文件）
@@ -362,7 +361,16 @@ const disableMarkdownFilter = isMarkdown
   → 写入 .mp3 文件
 ```
 
-### 模式二：播放+保存模式（--play）
+### 模式二：播放模式（--play，无 --output）
+
+```
+输入文本
+  → 请求 API（PCM 格式，sample_rate=24000）
+  → 流式接收 chunk → 实时写入 ffplay stdin（边播边听）
+  → 播放结束，退出
+```
+
+### 模式三：播放后保存模式（--play --output <path>）
 
 ```
 输入文本
@@ -372,15 +380,6 @@ const disableMarkdownFilter = isMarkdown
     └── 同时累积到 buffer
   → 等待 ffplay 进程退出（播放真正结束）
   → buffer → ffmpeg → 保存 MP3
-```
-
-### 模式三：只播放模式（--play --no-save）
-
-```
-输入文本
-  → 请求 API（PCM 格式）
-  → 流式接收 chunk → 实时写入 ffplay stdin
-  → 播放结束，退出
 ```
 
 ---
@@ -453,10 +452,9 @@ bun build src/index.ts --compile --outfile tts-cli
 **ffplay 播放 PCM 的命令：**
 
 ```bash
-ffplay -f s16le -ar 24000 -ac 1 -nodisp -autoexit -
+ffplay -f s16le -ar 24000 -nodisp -autoexit -
 # -f s16le   : 16bit 小端 PCM
 # -ar 24000  : 采样率
-# -ac 1      : 单声道
 # -nodisp    : 不显示视频窗口
 # -autoexit  : 播放完自动退出
 # -          : 从 stdin 读取
@@ -475,8 +473,8 @@ Windows:  winget install ffmpeg
 | 场景 | 需要 ffmpeg |
 |---|---|
 | 只下载 MP3（默认） | ❌ |
-| `--play --no-save` | ✅（ffplay 播放）|
-| `--play` 播放+保存 | ✅（ffplay 播放 + ffmpeg 转码）|
+| `--play` | ✅（ffplay 播放）|
+| `--play --output <path>` | ✅（ffplay 播放 + ffmpeg 转码）|
 
 **运行时报错提示：**
 

@@ -7,7 +7,9 @@ Built with TypeScript and Bun.
 ## Features
 
 - **Download mode**: Convert markdown/text to MP3 files
-- **Play mode**: Stream audio while converting with ffplay
+- **Play mode**: Stream audio in real-time with ffplay
+  - `--play`: Audio only, no file saved
+  - `--play --output <path>`: Play then save to file
 - **Auto-detect markdown filter** based on file extension
 - **Interactive setup wizard** for first-time users
 - **Progress bar** with character count and received KB
@@ -36,13 +38,13 @@ bun build src/index.ts --compile --outfile tts-cli
 # Convert with default settings
 ./tts-cli input.md
 
-# Convert and play while downloading
+# Play while converting (audio only, no save)
 ./tts-cli input.md --play
 
-# Play only, don't save
-./tts-cli input.md --play --no-save
+# Play then save to custom path
+./tts-cli input.md --play --output /path/to/output.mp3
 
-# Custom output path
+# Custom output path (download only)
 ./tts-cli input.md --output /path/to/output.mp3
 ```
 
@@ -96,8 +98,7 @@ tts-cli <input> [options]
 
 Options:
   --play                    Play audio while converting (requires ffplay)
-  --no-save                 Don't save file (requires --play)
-  --output <path>           Output file path
+  --output <path>           Output file path (save only when specified)
   --voice <name>            Voice name
   --resource-id <id>        Resource ID: seed-tts-1.0, seed-tts-2.0, etc.
   --speed <n>               Speech speed [-50, 100]
@@ -138,7 +139,9 @@ Config commands:
 ## Requirements
 
 - **Bun** - JavaScript runtime and package manager
-- **ffmpeg** - Required for `--play` mode (ffplay for playback, ffmpeg for transcoding)
+- **ffmpeg** - Required for `--play` mode:
+  - `--play` (audio only): requires ffplay
+  - `--play --output <path>`: requires ffplay and ffmpeg
 
 ### Installing ffmpeg
 
