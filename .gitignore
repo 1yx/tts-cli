@@ -11,3 +11,4 @@ files.zip
 tts-cli
 *.log
 test-temp/
+.DS_Store
