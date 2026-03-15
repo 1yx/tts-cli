@@ -64,19 +64,33 @@ export async function readConfigFile(): Promise<Partial<Config> | null> {
     }
     const content = await file.text()
     return parse(content) as Partial<Config>
-  } catch {
-    return null
+  } catch (err) {
+    throw new Error(`Failed to parse config file: ${CONFIG_PATH}\nError: ${err}`)
   }
 }
 
-// Save config to file
+// Save config to file (minimal: only non-default api credentials)
 export async function saveConfig(config: Config): Promise<void> {
   const configDir = getConfigDir()
-  
+
   // Create directory if not exists
   await Bun.write(CONFIG_PATH, '')
-  
-  const toml = stringify(config)
+
+  // Only save api.app_id and api.token if they are non-empty
+  const minimalConfig: { api?: { app_id?: string; token?: string } } = {}
+  if (config.api.app_id && config.api.app_id !== DEFAULTS.api.app_id) {
+    minimalConfig.api = {
+      app_id: config.api.app_id,
+    }
+  }
+  if (config.api.token && config.api.token !== DEFAULTS.api.token) {
+    if (!minimalConfig.api) {
+      minimalConfig.api = {}
+    }
+    minimalConfig.api.token = config.api.token
+  }
+
+  const toml = stringify(minimalConfig)
   await Bun.write(CONFIG_PATH, toml)
 }
 

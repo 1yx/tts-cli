@@ -15,7 +15,6 @@ export interface TTSOptions {
   volume?: number
   emotion?: string
   emotionScale?: number
-  format?: 'mp3' | 'pcm' | 'ogg_opus'
   sampleRate?: number
   bitRate?: number
   lang?: string
@@ -54,9 +53,9 @@ export function buildHeaders(config: Config, overrides: TTSOptions = {}): Record
   return headers
 }
 
-export function buildPayload(text: string, config: Config, overrides: TTSOptions = {}) {
+export function buildPayload(text: string, config: Config, overrides: TTSOptions = {}, format: 'mp3' | 'pcm' = 'mp3') {
   const audioParams: Record<string, unknown> = {
-    format: overrides.format ?? config.tts.format,
+    format,
     sample_rate: overrides.sampleRate ?? config.tts.sample_rate,
     speech_rate: overrides.speed ?? config.tts.speed,
     loudness_rate: overrides.volume ?? config.tts.volume,
@@ -101,9 +100,9 @@ export function buildPayload(text: string, config: Config, overrides: TTSOptions
   }
 }
 
-async function fetchTTS(text: string, config: Config, options: TTSOptions = {}): Promise<Response> {
+async function fetchTTS(text: string, config: Config, options: TTSOptions = {}, format: 'mp3' | 'pcm' = 'mp3'): Promise<Response> {
   const headers = buildHeaders(config, options)
-  const payload = buildPayload(text, config, options)
+  const payload = buildPayload(text, config, options, format)
 
   const response = await fetch(TTS_ENDPOINT, {
     method: 'POST',
@@ -178,7 +177,7 @@ export async function runDownloadMode(
   const { text, disableMarkdownFilter } = await readInputFile(inputPath)
   const outputPath = resolveOutputPath(inputPath, options.output)
 
-  const response = await fetchTTS(text, config, { ...options, disableMarkdownFilter })
+  const response = await fetchTTS(text, config, { ...options, disableMarkdownFilter }, 'mp3')
 
   const reader = response.body!.getReader()
   const decoder = new TextDecoder()
@@ -249,10 +248,9 @@ export async function runPlayMode(
 
   const response = await fetchTTS(text, config, {
     ...args,
-    format: 'pcm',
     sampleRate,
     disableMarkdownFilter,
-  })
+  }, 'pcm')
 
   const reader = response.body!.getReader()
   const decoder = new TextDecoder()

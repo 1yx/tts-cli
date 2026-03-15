@@ -1,5 +1,5 @@
-import { intro, outro, text, isCancel, note, confirm, log } from '@clack/prompts'
-import { Config, DEFAULTS, saveConfig } from './config.js'
+import { intro, outro, text, password, isCancel, note, confirm, log } from '@clack/prompts'
+import { Config, DEFAULTS, saveConfig, CONFIG_PATH } from './config.js'
 import { hasFfmpeg, getInstallGuide } from './env.js'
 
 export async function runSetup(): Promise<void> {
@@ -7,25 +7,25 @@ export async function runSetup(): Promise<void> {
 
   // Phase 1: Environment check
   log.step('[1/2] Checking environment dependencies...')
-  
+
   if (hasFfmpeg()) {
     log.success('ffmpeg is installed')
   } else {
     log.warn('ffmpeg not detected')
     log.message('tts-cli requires ffmpeg for audio playback (ffplay) and transcoding.')
     log.message('Please install:')
-    
+
     note(getInstallGuide(), 'Installation Guide')
-    
+
     const shouldContinue = await confirm({
       message: 'Press Enter to continue after installation (or skip)...',
       initialValue: true,
     })
-    
+
     if (isCancel(shouldContinue)) {
       process.exit(0)
     }
-    
+
     // User can skip and continue, will error at runtime when using --play
   }
 
@@ -41,52 +41,25 @@ export async function runSetup(): Promise<void> {
   }
 
   // Get token
-  const token = await text({
+  const token = await password({
     message: 'Enter your Doubao token:',
-    mask: true,
-    placeholder: 'your_token',
   })
   if (isCancel(token)) {
     process.exit(0)
   }
 
-  // Get voice
-  const voice = await text({
-    message: 'Default voice:',
-    placeholder: DEFAULTS.tts.voice,
-    defaultValue: DEFAULTS.tts.voice,
-  })
-  if (isCancel(voice)) {
-    process.exit(0)
-  }
-
-  // Get speed
-  const speedStr = await text({
-    message: 'Default speed:',
-    placeholder: String(DEFAULTS.tts.speed),
-    defaultValue: String(DEFAULTS.tts.speed),
-  })
-  if (isCancel(speedStr)) {
-    process.exit(0)
-  }
-  const speed = speedStr ? parseInt(speedStr, 10) : DEFAULTS.tts.speed
-
-  // Create config
+  // Create minimal config (only api credentials)
   const config: Config = {
     ...DEFAULTS,
     api: {
       app_id: app_id as string,
       token: token as string,
     },
-    tts: {
-      ...DEFAULTS.tts,
-      voice: voice as string,
-      speed,
-    },
   }
 
   // Save config
   await saveConfig(config)
 
-  outro('✓ Config saved')
+  log.info(`Config saved to: ${CONFIG_PATH}`)
+  outro('✓ Setup complete')
 }

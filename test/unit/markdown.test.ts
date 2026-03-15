@@ -1,5 +1,29 @@
 import { describe, it, expect } from 'bun:test'
-import { resolveOutputPath } from '../../src/markdown.js'
+import { detectMarkdown, resolveOutputPath } from '../../src/markdown.js'
+
+describe('detectMarkdown()', () => {
+  it('returns true for .md files', () => {
+    expect(detectMarkdown('test.md')).toBe(true)
+    expect(detectMarkdown('/path/to/file.md')).toBe(true)
+  })
+
+  it('returns true for .markdown files', () => {
+    expect(detectMarkdown('test.markdown')).toBe(true)
+    expect(detectMarkdown('/path/to/file.markdown')).toBe(true)
+  })
+
+  it('returns true for uppercase extensions (.MD, .MARKDOWN, .Markdown)', () => {
+    expect(detectMarkdown('test.MD')).toBe(true)
+    expect(detectMarkdown('test.MARKDOWN')).toBe(true)
+    expect(detectMarkdown('test.Markdown')).toBe(true)
+  })
+
+  it('returns false for non-markdown files', () => {
+    expect(detectMarkdown('test.txt')).toBe(false)
+    expect(detectMarkdown('test.log')).toBe(false)
+    expect(detectMarkdown('test')).toBe(false)
+  })
+})
 
 describe('resolveOutputPath()', () => {
   it('returns input/foo.mp3 for input/foo.md without --output', () => {

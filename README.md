@@ -26,13 +26,13 @@ cd tts-cli
 bun install
 
 # Build binary
-bun build src/index.ts --compile --outfile tts-cli
+bun run build
 ```
 
 ## Quick Start
 
 ```bash
-# First run - interactive setup
+# First run - interactive setup (asks for app_id and token only)
 ./tts-cli input.md
 
 # Convert with default settings
@@ -70,8 +70,27 @@ bun build src/index.ts --compile --outfile tts-cli
 
 ## Configuration
 
-Configuration file: `~/.config/tts-cli/config.toml`
+Configuration file location: `~/.config/tts-cli/config.toml` (macOS/Linux) or `%APPDATA%\tts-cli\config.toml` (Windows)
 
+**Editing the config file:**
+
+Use your favorite text editor to open the config file:
+```bash
+# macOS/Linux
+nano ~/.config/tts-cli/config.toml
+
+# Windows
+notepad %APPDATA%\tts-cli\config.toml
+```
+
+**Default config file (after setup):**
+```toml
+[api]
+app_id = "your_app_id"
+token  = "your_access_token"
+```
+
+**Advanced configuration** (optional additions):
 ```toml
 [api]
 app_id = "your_app_id"
@@ -80,41 +99,40 @@ token  = "your_access_token"
 [tts]
 voice       = "en_male_tim_uranus_bigtts"
 resource_id = "seed-tts-2.0"
-speed       = 0
-volume      = 0
-sample_rate = 24000
-bit_rate    = 128000
-format      = "mp3"
-lang        = "en"
+speed       = 0        # [-50, 100]
+volume      = 0        # [-50, 100]
+sample_rate = 24000    # 8000/16000/22050/24000/32000/44100/48000
+bit_rate    = 128000   # Only for MP3 format
+lang        = "zh-cn"  # zh-cn / en / ja / es-mx / id / pt-br
 
 [output]
 dir = "~/Downloads"
 ```
+
+**Note:** The config file only stores values that differ from defaults. Add additional sections as needed.
 
 ## CLI Parameters
 
 ```bash
 tts-cli <input> [options]
 
+Positional argument:
+  input                     Input file path (markdown or text)
+
 Options:
   --play                    Play audio while converting (requires ffplay)
   --output <path>           Output file path (save only when specified)
-  --voice <name>            Voice name
+
+  --voice <name>            Voice name (overrides config)
   --resource-id <id>        Resource ID: seed-tts-1.0, seed-tts-2.0, etc.
   --speed <n>               Speech speed [-50, 100]
   --volume <n>              Volume [-50, 100]
   --emotion <type>          Emotion type (happy, sad, angry, etc.)
   --emotion-scale <n>       Emotion scale [1-5]
-  --format <fmt>            Audio format: mp3, pcm, ogg_opus
   --sample-rate <n>         Sample rate (default: 24000)
   --bit-rate <n>            Bit rate for MP3
   --lang <code>             Language: zh-cn, en, ja, es-mx, id, pt-br
   --silence <ms>            Sentence end silence duration [0-30000]
-
-Config commands:
-  tts-cli config              View current config
-  tts-cli config --edit       Open config in editor
-  tts-cli config --reset      Reset configuration
 ```
 
 ## Examples
@@ -134,6 +152,12 @@ Config commands:
 
 # Japanese text
 ./tts-cli article.md --lang ja --voice multi_female_sophie_conversation_wvae_bigtts
+
+# Play without saving
+./tts-cli article.md --play
+
+# Play and save
+./tts-cli article.md --play --output result.mp3
 ```
 
 ## Requirements
