@@ -3,6 +3,9 @@ import cliProgress from 'cli-progress';
 import type { Config } from './config.js';
 import { readInputFile, resolveOutputPath, checkFileExists } from './markdown.js';
 import type { Writable } from 'stream';
+import { unlinkSync } from 'node:fs';
+import { createWriteStream } from 'node:fs';
+import type { WriteStream } from 'node:fs';
 
 import {
   spawnFfplay,
@@ -10,12 +13,81 @@ import {
   isPipeError,
   mergeAudioChunks,
   parseJSONLine,
+  safeWrite,
 } from './utils.js';
 import { assertFfmpeg } from './env.js';
 import { APIError, getAPIErrorType } from './errors.js';
+import type { ChildProcess } from 'child_process';
 
 const TTS_ENDPOINT =
   'https://openspeech.bytedance.com/api/v3/tts/unidirectional';
+
+// Signal handling state
+let ffplayProcess: ChildProcess | null = null;
+let tempFile: string | null = null;
+let isInterrupted = false;
+
+/**
+ * Cleanup function: terminate ffplay and delete temp file.
+ * Called by signal handlers and exit hook.
+ */
+async function cleanup(): Promise<void> {
+  // 1. Terminate ffplay process
+  if (ffplayProcess && !ffplayProcess.killed) {
+    ffplayProcess.kill('SIGTERM');
+    // Wait for process to exit (max 5 seconds)
+    await Promise.race([
+      new Promise<void>((resolve) => {
+        ffplayProcess!.on('exit', () => resolve());
+      }),
+      new Promise<void>((resolve) => setTimeout(() => resolve(), 5000)),
+    ]);
+    // Force kill if still running
+    if (!ffplayProcess.killed) {
+      ffplayProcess.kill('SIGKILL');
+    }
+  }
+
+  // 2. Delete temp file
+  if (tempFile) {
+    try {
+      await Bun.file(tempFile).delete(); // Use async delete in signal handlers
+    } catch {
+      // Ignore errors
+    }
+  }
+}
+
+// Register signal handlers
+process.on('SIGINT', async () => {
+  isInterrupted = true;
+  log.warn('Interrupted by user');
+  await cleanup();
+  process.exit(130); // 128 + 2 (SIGINT)
+});
+
+process.on('SIGTERM', async () => {
+  isInterrupted = true;
+  await cleanup();
+  process.exit(143); // 128 + 15 (SIGTERM)
+});
+
+// Exit hook for Windows compatibility + abnormal exit cleanup
+process.on('exit', (code) => {
+  // Windows: forcefully terminate ffplay in exit hook
+  if (ffplayProcess && !ffplayProcess.killed) {
+    ffplayProcess.kill('SIGKILL');
+  }
+
+  // Abnormal exit: sync delete temp file
+  if (code !== 0 && tempFile) {
+    try {
+      unlinkSync(tempFile);
+    } catch {
+      // Ignore errors
+    }
+  }
+});
 
 /**
  * Options for TTS processing.
@@ -480,8 +552,9 @@ function setupFfplayClosePromise(ffplay: ReturnType<typeof spawnFfplay>): {
 } {
   const closePromise = new Promise<void>((resolve, reject) => {
     // Exit code 141 (SIGPIPE) is OK - means pipe was closed, ffplay exited
+    // Also accept other codes when interrupted (user may have sent SIGTERM)
     ffplay.on('close', (code: number | null) => {
-      if (code && code !== 0 && code !== 141) {
+      if (code && code !== 0 && code !== 141 && !isInterrupted) {
         reject(new Error(`ffplay exited with code ${code}`));
       } else {
         resolve();
@@ -574,6 +647,8 @@ type FinalizeFfplayOptions = {
 type StreamWithFfplayOptions = {
   reader: ReadableStreamDefaultReader<Uint8Array>;
   ffplay: ReturnType<typeof spawnFfplay>;
+  writeStream: WriteStream;
+  tempFilePath: string;
   audioChunks: Uint8Array[];
   bar: cliProgress.SingleBar;
   ctx: ProgressCtx;
@@ -614,7 +689,23 @@ async function processAudioChunkForFfplay(
   }
 
   const chunk = Uint8Array.from(atob(json.data), (c) => c.charCodeAt(0));
-  await writeToFfplay(ffplay, chunk, needDrainRef);
+  const stdin = ffplay.stdin;
+  if (!stdin) {
+    throw new Error('ffplay stdin is not available');
+  }
+
+  // Use safeWrite for EPIPE handling
+  if (needDrainRef.value) {
+    await new Promise<void>((resolve) => {
+      stdin.once('drain', () => resolve());
+    });
+    needDrainRef.value = false;
+  }
+
+  await safeWrite(stdin, chunk);
+  if (!stdin.writable) {
+    needDrainRef.value = true;
+  }
 }
 
 /**
@@ -654,8 +745,17 @@ async function finalizeFfplayPlayback(
  * Stream TTS audio with ffplay playback.
  */
 async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
-  const { reader, ffplay, audioChunks, bar, ctx, needDrainRef, subtitleWriter } =
-    opts;
+  const {
+    reader,
+    ffplay,
+    writeStream,
+    tempFilePath,
+    audioChunks,
+    bar,
+    ctx,
+    needDrainRef,
+    subtitleWriter,
+  } = opts;
   const stdin = ffplay.stdin;
   if (!stdin) {
     throw new Error('ffplay stdin is not available');
@@ -667,6 +767,17 @@ async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
     await processStreamLines(reader, async (json) => {
       handleChunk({ json, audioChunks, bar, ctx });
       await processAudioChunkForFfplay(json, ffplay, needDrainRef);
+      // Write to temp file in parallel
+      if (json.data) {
+        const chunk = Uint8Array.from(atob(json.data), (c) => c.charCodeAt(0));
+        await new Promise<void>((resolve) => {
+          if (!writeStream.write(chunk)) {
+            writeStream.once('drain', () => resolve());
+          } else {
+            resolve();
+          }
+        });
+      }
       // Accumulate sentences for subtitle
       if (subtitleWriter && json.sentence) {
         writeSubtitleSentence(subtitleWriter, json.sentence);
@@ -677,6 +788,13 @@ async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
     bar.stop();
     ffplay.kill();
     cleanup();
+    // Clean up temp file on error
+    try {
+      await Bun.file(tempFilePath).delete();
+    } catch {
+      // Ignore errors
+    }
+    tempFile = null;
     throw err;
   }
 
@@ -770,9 +888,18 @@ export async function runPlayMode(
   const { audioChunks, bar, ctx } = initAudioState(text.length);
   const needDrainRef = { value: false };
 
+  // Create temp file (same directory as output MP3)
+  const tempFilePath = `${outputPath}.temp.raw`;
+  const writeStream = createWriteStream(tempFilePath);
+  // Store in global for cleanup
+  ffplayProcess = ffplay;
+  tempFile = tempFilePath;
+
   await streamWithFfplay({
     reader,
     ffplay,
+    writeStream,
+    tempFilePath,
     audioChunks,
     bar,
     ctx,
@@ -780,8 +907,23 @@ export async function runPlayMode(
     subtitleWriter,
   });
 
-  // Always save MP3
-  await saveAudioToFile(audioChunks, outputPath, sampleRate);
+  // Close writeStream and wait for finish
+  writeStream.end();
+  await new Promise<void>((resolve) => {
+    writeStream.on('finish', () => resolve());
+  });
+
+  // Always save MP3 from temp file
+  await convertPCMtoMP3(Buffer.from(await Bun.file(tempFilePath).arrayBuffer()), outputPath, sampleRate);
+  log.success(`Saved to ${outputPath}`);
+
+  // Delete temp file
+  try {
+    await Bun.file(tempFilePath).delete();
+  } catch {
+    // Ignore errors
+  }
+  tempFile = null;
 
   // Close subtitle writer
   if (subtitleWriter) {

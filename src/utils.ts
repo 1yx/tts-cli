@@ -172,3 +172,63 @@ export async function convertPCMtoMP3(
     });
   });
 }
+
+/**
+ * Safely write to a Writable stream, handling EPIPE errors gracefully.
+ * EPIPE is expected when ffplay exits before we finish writing.
+ *
+ * @param stream - The writable stream (typically ffplay stdin)
+ * @param chunk - The data chunk to write
+ * @returns Promise that resolves when write is complete
+ */
+export function safeWrite(
+  stream: Writable,
+  chunk: Uint8Array
+): Promise<void> {
+  return new Promise((resolve) => {
+    // Check if stream can still be written to
+    if (!stream.writable || stream.destroyed) {
+      return resolve();
+    }
+
+    // Set up error handler for EPIPE
+    const onError = (err: Error) => {
+      if ('code' in err && err.code === 'EPIPE') {
+        // Silently handle EPIPE - player has closed, but playback is complete
+        resolve();
+      } else {
+        // For other errors, also resolve to avoid crashing
+        // The error will be handled elsewhere in the stream
+        resolve();
+      }
+    };
+
+    stream.once('error', onError);
+
+    // Write the chunk
+    const canWrite = stream.write(chunk, (err) => {
+      stream.off('error', onError);
+      if (err) {
+        if ('code' in err && err.code === 'EPIPE') {
+          // Silently handle EPIPE
+          resolve();
+        } else {
+          // For other errors, resolve to avoid crashing
+          resolve();
+        }
+        return;
+      }
+    });
+
+    // Handle backpressure
+    if (!canWrite) {
+      stream.once('drain', () => {
+        stream.off('error', onError);
+        resolve();
+      });
+    } else {
+      stream.off('error', onError);
+      process.nextTick(resolve);
+    }
+  });
+}

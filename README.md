@@ -15,6 +15,8 @@ Built with TypeScript and Bun.
 - **Interactive setup wizard** for first-time users
 - **Progress bar** with character count and received KB
 - **Config file support** with TOML format
+- **Memory efficient**: Uses streaming with constant ~64KB memory usage regardless of audio length
+- **Graceful interrupt**: Cleanly handles Ctrl+C with proper resource cleanup
 
 ## Installation
 
@@ -250,6 +252,27 @@ bun run build
 | `--force` | ✗ | Generate MP3 |
 | `--output <path>` | ✗ | Generate MP3 to path |
 | `--output <folder>/` | ✗ | Generate MP3 to folder/input-filename.mp3 |
+
+## Interrupt Behavior (Ctrl+C)
+
+When you press Ctrl+C during audio generation or playback:
+
+- **Playback stops immediately** - ffplay process is terminated
+- **Temporary files are cleaned up** - No `.temp.raw` files left behind
+- **MP3 is NOT saved** - Interrupting means "cancel this operation"
+- **Process exits with code 130** - Standard Unix signal exit code
+
+If you want to save the audio file, let the process complete naturally. Interrupting is designed to cleanly abort the operation.
+
+## Memory Optimization
+
+The `--play` mode uses a streaming approach to keep memory usage constant and low:
+
+- **Memory usage**: ~64KB (Node.js stream buffer) regardless of audio length
+- **How it works**: PCM audio data is written directly to a temporary file (`output.temp.raw`) during playback
+- **Temporary file location**: Same directory as the target MP3 file (for fast operations)
+- **Cleanup**: Temp file is automatically deleted after MP3 transcoding completes
+- **For long audio**: This approach handles hours of content without memory issues (vs. ~172 MB/hour if buffered in memory)
 
 ## License
 

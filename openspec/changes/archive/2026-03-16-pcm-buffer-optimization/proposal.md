@@ -82,6 +82,8 @@ ffplay stdin  audioChunks[] (内存累积)
 
 如果选择临时文件方案：
 
+#### 3.1 方案 A：每 chunk 写入（原方案）
+
 ```typescript
 // 创建临时 .pcm 文件
 const tmpFile = `/tmp/tts-cli-${Date.now()}.pcm`;
@@ -99,22 +101,234 @@ await convertPCMtoMP3(tmpFile, outputPath);
 await remove(tmpFile);
 ```
 
-**需要注意的问题：**
-- 临时文件路径（跨平台兼容性）
-- 进程异常退出时的清理
-- 磁盘空间占用（与内存占用类似，但交换空间更大）
+#### 3.2 方案 B：pipe + WriteStream（推荐方案）
 
-### 4. 是否需要用户可配置的阈值？
+**核心思路：** 利用 Node.js 原生 `fs.createWriteStream` 自动处理缓冲和背压，无需手动管理批次。临时文件与目标 MP3 同目录。
 
-可以添加配置选项：
-```toml
-[playback]
-# 当音频超过此时长（分钟）时，使用临时文件模式
-# buffer-mode = "memory" | "tempfile"
-# threshold-minutes = 60
+```typescript
+import { createWriteStream } from 'node:fs';
+
+// 临时文件与目标 MP3 同目录
+const tempFile = `${outputPath}.temp.raw`;
+const writeStream = createWriteStream(tempFile);
+
+// 处理流式数据
+await processStreamLines(reader, async (json) => {
+  if (json.data) {
+    const chunk = decodeBase64(json.data);
+
+    // 并行写入：ffplay + temp file
+    await Promise.all([
+      safeWrite(ffplay.stdin, chunk),      // 播放
+      new Promise((resolve) => {
+        if (!writeStream.write(chunk)) {
+          writeStream.once('drain', resolve);  // 背压处理
+        } else {
+          resolve(undefined);
+        }
+      })                                    // 写入文件
+    ]);
+  }
+});
+
+// 流结束后
+writeStream.end();
+await new Promise(resolve => writeStream.on('finish', resolve));
+
+// 转码（单个文件，无需 concat）
+await convertPCMtoMP3(tempFile, outputPath);
+await unlink(tempFile);
 ```
 
-但这增加了配置复杂度，可能不值得。
+**方案对比：**
+
+| 方案 | 磁盘 I/O | 内存占用 | 实现复杂度 | 文件管理 |
+|------|---------|---------|-----------|----------|
+| 每 chunk 写入 | 频繁 | O(单 chunk) | 低 | 单文件 |
+| 分批写入 | 较少（每 10MB） | O(10MB) | 高 | 多文件 + concat |
+| **pipe 方案** | **Node.js 自动优化** | **O(64KB)** | **低** | **单文件** |
+
+**推荐 pipe 方案**，因为：
+- `fs.createWriteStream` 默认 64KB 缓冲区，Node.js 自动优化 I/O
+- 内存占用更小（64KB vs 10MB）
+- 无需手动管理 batchIndex、accumulatedBytes 等状态
+- 无需 ffmpeg concat 合并多个文件
+- 背压由 Node.js 原生处理，更可靠
+- 代码更简洁，bug 更少
+
+#### 3.3 音频连续性保证
+
+使用 `createWriteStream` 写入单个临时文件：
+
+```
+output.temp.raw: [完整的连续 PCM 数据流]
+```
+
+无需文件合并，直接转码：
+```bash
+ffmpeg -f s16le -ar 24000 -i output.temp.raw \
+  -c:a mp3 -b:a 128k output.mp3
+```
+
+**单文件写入保证音频连续性，不会有拼接问题。**
+
+#### 3.4 需要注意的问题
+
+- 临时文件路径（与目标 MP3 同目录：`outputPath.temp.raw`）
+- 进程异常退出时的清理
+- 磁盘空间占用（与目标 MP3 相同目录，共享可用空间）
+- **无需配置阈值**，Node.js 自动优化缓冲
+
+### 4. 内存占用分析
+
+**pipe 方案内存布局：**
+
+```typescript
+const chunk = decodeBase64(json.data);  // 临时 chunk (~50KB)
+
+safeWrite(ffplay.stdin, chunk);         // 复制到 stdin 缓冲区
+writeStream.write(chunk);               // 复制到 WriteStream 缓冲区
+// chunk 可被垃圾回收
+```
+
+**实际内存占用：**
+
+```
+临时 chunk (50KB)
+    ↓
+┌────────────┴────────────┐
+│                         │
+ffplay stdin     WriteStream 内部缓冲区
+(复制)           (64KB 默认缓冲)
+    ↓                   ↓
+用于播放            用于磁盘写入
+```
+
+**为什么 pipe 方案内存占用小：**
+- chunk 写入后立即可被垃圾回收
+- `writeStream` 内部缓冲区默认 64KB（highWaterMark）
+- 不需要累积所有 chunks
+- Node.js 自动管理缓冲和背压
+
+### 5. 是否需要用户可配置的缓冲区？
+
+**不需要。** Node.js `fs.createWriteStream` 默认缓冲区（64KB highWaterMark）已经足够高效。
+
+如果确实需要调优（极少场景），可以通过 `highWaterMark` 选项调整：
+
+```typescript
+const writeStream = createWriteStream(tempFile, { highWaterMark: 128 * 1024 });
+```
+
+但这增加了配置复杂度，且收益很小，不推荐暴露为用户配置。
+
+### 5. SIGINT/Ctrl+C 信号处理
+
+#### 5.1 当前状态
+
+**❌ 当前代码没有 SIGINT 监听**
+
+```bash
+$ tts-cli long-text.md --play
+[播放中...] ^C
+```
+
+**问题：**
+- 主进程立即退出
+- ffplay 子进程可能继续运行（占用声卡）
+- HTTP 流没有正确关闭
+- 临时文件（如果有）没有清理
+
+#### 5.2 需要的清理逻辑
+
+```typescript
+let ffplayProcess: ReturnType<typeof spawnFfplay> | null = null;
+let tempFile: string | null = null;
+let isInterrupted = false;
+
+// 清理函数
+async function cleanup() {
+  // 1. 清理 ffplay 进程
+  if (ffplayProcess && !ffplayProcess.killed) {
+    ffplayProcess.kill('SIGTERM');
+    // 等待进程退出（最多 5 秒）
+    await Promise.race([
+      new Promise(resolve => ffplayProcess.on('exit', resolve)),
+      new Promise(resolve => setTimeout(resolve, 5000)),
+    ]);
+    // 如果仍未退出，强制终止
+    if (!ffplayProcess.killed) {
+      ffplayProcess.kill('SIGKILL');
+    }
+  }
+
+  // 2. 清理临时文件
+  if (tempFile) {
+    try {
+      await unlink(tempFile);
+    } catch {}
+  }
+}
+
+// 注册信号处理
+process.on('SIGINT', async () => {
+  isInterrupted = true;
+  log.warn('Interrupted by user');
+  await cleanup();
+  process.exit(130); // 128 + 2 (SIGINT)
+});
+
+process.on('SIGTERM', async () => {
+  isInterrupted = true;
+  await cleanup();
+  process.exit(143); // 128 + 15 (SIGTERM)
+});
+
+// exit 钩子：Windows 兼容 + 异常退出清理
+process.on('exit', (code) => {
+  // Windows 不支持 SIGTERM，需要在 exit 钩子里强制终止
+  if (ffplayProcess && !ffplayProcess.killed) {
+    ffplayProcess.kill('SIGKILL'); // Windows 强制终止
+  }
+
+  // 异常退出时清理临时文件
+  if (code !== 0 && tempFile) {
+    try {
+      unlinkSync(tempFile);
+    } catch {}
+  }
+});
+```
+
+#### 5.3 清理时机
+
+| 场景 | 临时文件处理 | MP3 保存 |
+|------|-------------|---------|
+| 正常完成 | 用于转码，然后删除 | ✅ 保存 |
+| Ctrl+C 中断 | 立即删除 | ❌ 不保存 |
+| API 错误 | 删除（不完整） | ❌ 不保存 |
+| ffplay 崩溃 | 删除（不完整） | ❌ 不保存 |
+
+#### 5.4 跨平台信号处理
+
+注意不同平台的信号差异：
+
+| 平台 | 中断信号 | SIGTERM 支持 | 退出码 |
+|------|---------|-------------|--------|
+| Linux/macOS | SIGINT | ✅ 支持 | 130 (128+2) |
+| Linux/macOS | SIGTERM | ✅ 支持 | 143 (128+15) |
+| Windows | SIGINT | ⚠️ 不支持 SIGTERM | 130 |
+| Windows | SIGTERM | ⚠️ 不支持 | - |
+
+**Windows 特殊处理：**
+- Windows 不支持 SIGTERM 信号
+- 必须在 `exit` 钩子中调用 `ffplayProcess.kill('SIGKILL')` 强制终止
+- exit 钩子中只能使用同步操作（`unlinkSync`）
+
+**推荐策略：**
+- SIGINT/SIGTERM 处理器中先尝试 SIGTERM（Unix）
+- exit 钩子作为兜底，确保 ffplay 被终止（Windows + 异常退出）
+- 超时后使用 SIGKILL 强制终止（Unix）
 
 ## Impact
 
