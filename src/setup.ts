@@ -1,6 +1,5 @@
 import {
   intro,
-  outro,
   text,
   password,
   isCancel,
@@ -8,7 +7,6 @@ import {
   confirm,
   log,
 } from '@clack/prompts';
-import { type Config, DEFAULTS, saveConfig, CONFIG_PATH } from './config.js';
 import { hasFfmpeg, getInstallGuide } from './env.js';
 
 export type Credentials = {
@@ -76,21 +74,4 @@ export async function collectCredentials(): Promise<Credentials> {
     app_id: appIdValue,
     token: tokenValue,
   };
-}
-
-/**
- *
- */
-export async function runSetup(): Promise<void> {
-  const creds = await collectCredentials();
-  const config: Config = {
-    ...DEFAULTS,
-    api: creds,
-  };
-
-  // Save config
-  await saveConfig(config);
-
-  log.info(`Config saved to: ${CONFIG_PATH}`);
-  outro('✓ Setup complete');
 }

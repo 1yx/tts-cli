@@ -2,12 +2,7 @@
 import { existsSync } from 'fs';
 import { defineCommand, runMain } from 'citty';
 import { log, outro } from '@clack/prompts';
-import {
-  CONFIG_PATH,
-  loadConfig,
-  saveConfig,
-  DEFAULTS,
-} from './config.js';
+import { CONFIG_PATH, loadConfig, saveConfig, DEFAULTS } from './config.js';
 import { collectCredentials, type Credentials } from './setup.js';
 import { runPlayMode, runDownloadMode, type TTSOptions } from './tts.js';
 import { assertFfmpeg } from './env.js';
@@ -299,7 +294,7 @@ async function main() {
     };
     await saveConfig(config);
     outro(
-      `✓ Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`
+      `Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`
     );
   }
 }
@@ -313,7 +308,9 @@ main().catch((err) => {
 
   // If first run failed, credentials were not saved
   if (firstRunCredentials) {
-    log.info('Config not saved. Please correct your credentials and try again.');
+    log.info(
+      'Config not saved. Please correct your credentials and try again.'
+    );
   }
 
   process.exit(1);

@@ -120,6 +120,7 @@ function buildAudioParams(
     sample_rate: overrides.sampleRate ?? config.tts.sample_rate,
     speech_rate: overrides.speed ?? config.tts.speed,
     loudness_rate: overrides.volume ?? config.tts.volume,
+    enable_subtitle: true,
   };
 
   if (overrides.bitRate !== undefined) {
@@ -215,7 +216,11 @@ async function fetchTTS(opts: FetchTTSOptions): Promise<Response> {
     }
     if (apiError) {
       const { APIError } = await import('./errors.js');
-      throw new APIError(apiError.code, apiError.message, apiError.type as 'auth' | 'quota' | 'rate_limit' | 'unknown');
+      throw new APIError(
+        apiError.code,
+        apiError.message,
+        apiError.type as 'auth' | 'quota' | 'rate_limit' | 'unknown'
+      );
     }
     throw new Error(
       `API request failed: ${response.status} ${response.statusText}\n${errorText}`
@@ -235,8 +240,7 @@ async function fetchTTS(opts: FetchTTSOptions): Promise<Response> {
 function createProgressBar(totalChars: number): cliProgress.SingleBar {
   const bar = new cliProgress.SingleBar(
     {
-      format:
-        '🎙  [{bar}] {percentage}% | {processedChars}/{totalChars} chars | {receivedKB}KB received',
+      format: '│  [{bar}] {percentage}%  | {receivedKB}KB received',
       hideCursor: true,
     },
     cliProgress.Presets.shades_classic
@@ -288,6 +292,11 @@ function updateSentenceProgress(
   bar: cliProgress.SingleBar
 ): void {
   if (!json.sentence?.text) {
+    return;
+  }
+
+  // Only process sentences with words array (filter out duplicate sentences)
+  if (!json.sentence.words || json.sentence.words.length === 0) {
     return;
   }
 
