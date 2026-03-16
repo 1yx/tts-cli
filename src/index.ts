@@ -118,6 +118,11 @@ const mainCommand = defineCommand({
       description: 'Force overwrite existing output file',
       default: false,
     },
+    subtitle: {
+      type: 'boolean',
+      description: 'Save raw TTS sentence data to subtitle file',
+      default: false,
+    },
   },
   /**
    *
@@ -182,6 +187,8 @@ const mainCommand = defineCommand({
       lang: args.lang,
       silence: args.silence ? parseInt(args.silence, 10) : undefined,
       resourceId: args.resourceId,
+      subtitle: args.subtitle,
+      force: args.force,
     };
 
     // Check output file existence (before API call)

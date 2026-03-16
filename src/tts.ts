@@ -1,7 +1,7 @@
 import { log } from '@clack/prompts';
 import cliProgress from 'cli-progress';
 import type { Config } from './config.js';
-import { readInputFile, resolveOutputPath } from './markdown.js';
+import { readInputFile, resolveOutputPath, checkFileExists } from './markdown.js';
 import type { Writable } from 'stream';
 
 import {
@@ -33,6 +33,8 @@ export type TTSOptions = {
   silence?: number;
   disableMarkdownFilter?: boolean;
   resourceId?: string;
+  subtitle?: boolean;
+  force?: boolean;
 };
 
 /**
@@ -47,6 +49,51 @@ type TTSChunk = {
     words: unknown[];
   };
 };
+
+/**
+ * Subtitle writer state for streaming JSON array write.
+ */
+type SubtitleWriter = {
+  file: { write: (data: string) => void; end: () => void };
+  first: boolean;
+  path: string;
+};
+
+/**
+ * Open subtitle writer for streaming JSON array write.
+ */
+function openSubtitleWriter(outputPath: string): SubtitleWriter {
+  const path = outputPath.replace('.mp3', '.subtitle.json');
+  const file = Bun.file(path).writer();
+  file.write('[\n');
+  return { file, first: true, path };
+}
+
+/**
+ * Write a sentence to subtitle file with proper comma handling.
+ */
+function writeSubtitleSentence(
+  writer: SubtitleWriter,
+  sentence: TTSChunk['sentence']
+): void {
+  if (!sentence) {
+    return;
+  }
+
+  if (!writer.first) {
+    writer.file.write(',\n');
+  }
+  writer.file.write(JSON.stringify(sentence, null, 2));
+  writer.first = false;
+}
+
+/**
+ * Close subtitle writer and finalize JSON array.
+ */
+function closeSubtitleWriter(writer: SubtitleWriter): void {
+  writer.file.write('\n]');
+  writer.file.end();
+}
 
 /**
  * Progress tracking context.
@@ -366,6 +413,16 @@ export async function runDownloadMode(
   const { text, disableMarkdownFilter } = await readInputFile(inputPath);
   const outputPath = resolveOutputPath(inputPath, options.output);
 
+  // Subtitle setup
+  const subtitlePath = outputPath.replace('.mp3', '.subtitle.json');
+  const subtitleEnabled =
+    options.subtitle &&
+    (!checkFileExists(subtitlePath) || (options.force ?? false));
+  let subtitleWriter: SubtitleWriter | null = null;
+  if (subtitleEnabled) {
+    subtitleWriter = openSubtitleWriter(outputPath);
+  }
+
   const response = await fetchTTS({
     text,
     config,
@@ -390,7 +447,12 @@ export async function runDownloadMode(
 
   try {
     await processStreamLines(reader, (json) => {
-      return handleChunk({ json, audioChunks, bar, ctx });
+      handleChunk({ json, audioChunks, bar, ctx });
+      // Accumulate sentences for subtitle
+      if (subtitleWriter && json.sentence) {
+        writeSubtitleSentence(subtitleWriter, json.sentence);
+      }
+      return json.code === 20000000;
     });
   } catch (err) {
     bar.stop();
@@ -400,6 +462,12 @@ export async function runDownloadMode(
   const merged = mergeAudioChunks(audioChunks);
   await Bun.write(outputPath, merged);
   log.success(`Saved to ${outputPath}`);
+
+  // Close subtitle writer
+  if (subtitleWriter) {
+    closeSubtitleWriter(subtitleWriter);
+    log.success(`Subtitles saved to ${subtitlePath}`);
+  }
 }
 
 /**
@@ -510,6 +578,7 @@ type StreamWithFfplayOptions = {
   bar: cliProgress.SingleBar;
   ctx: ProgressCtx;
   needDrainRef: { value: boolean };
+  subtitleWriter?: SubtitleWriter | null;
 };
 
 /**
@@ -585,7 +654,8 @@ async function finalizeFfplayPlayback(
  * Stream TTS audio with ffplay playback.
  */
 async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
-  const { reader, ffplay, audioChunks, bar, ctx, needDrainRef } = opts;
+  const { reader, ffplay, audioChunks, bar, ctx, needDrainRef, subtitleWriter } =
+    opts;
   const stdin = ffplay.stdin;
   if (!stdin) {
     throw new Error('ffplay stdin is not available');
@@ -595,9 +665,13 @@ async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
 
   try {
     await processStreamLines(reader, async (json) => {
-      const finished = handleChunk({ json, audioChunks, bar, ctx });
+      handleChunk({ json, audioChunks, bar, ctx });
       await processAudioChunkForFfplay(json, ffplay, needDrainRef);
-      return finished || json.code === 20000000;
+      // Accumulate sentences for subtitle
+      if (subtitleWriter && json.sentence) {
+        writeSubtitleSentence(subtitleWriter, json.sentence);
+      }
+      return json.code === 20000000;
     });
   } catch (err) {
     bar.stop();
@@ -667,6 +741,16 @@ export async function runPlayMode(
   const outputPath = resolveOutputPath(inputPath, args.output);
   const sampleRate = args.sampleRate ?? config.tts.sample_rate;
 
+  // Subtitle setup
+  const subtitlePath = outputPath.replace('.mp3', '.subtitle.json');
+  const subtitleEnabled =
+    args.subtitle &&
+    (!checkFileExists(subtitlePath) || (args.force ?? false));
+  let subtitleWriter: SubtitleWriter | null = null;
+  if (subtitleEnabled) {
+    subtitleWriter = openSubtitleWriter(outputPath);
+  }
+
   const response = await fetchTTS({
     text,
     config,
@@ -693,8 +777,15 @@ export async function runPlayMode(
     bar,
     ctx,
     needDrainRef,
+    subtitleWriter,
   });
 
   // Always save MP3
   await saveAudioToFile(audioChunks, outputPath, sampleRate);
+
+  // Close subtitle writer
+  if (subtitleWriter) {
+    closeSubtitleWriter(subtitleWriter);
+    log.success(`Subtitles saved to ${subtitlePath}`);
+  }
 }
