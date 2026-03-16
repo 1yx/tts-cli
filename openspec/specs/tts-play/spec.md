@@ -54,6 +54,27 @@
 
 ---
 
+### Requirement: 运行时凭证覆盖
+
+系统 SHALL 支持在 `--play` 模式下通过 CLI 参数临时覆盖 API 凭证。
+
+#### Scenario: 播放模式覆盖凭证
+
+- GIVEN 配置文件中 `app_id = "old_app_id"`
+- AND 配置文件中 `token = "old_token"`
+- WHEN 用户运行 `tts-cli input.md --play --appId new_app_id --token new_token`
+- THEN 本次播放请求使用 `new_app_id` 和 `new_token`
+- AND 配置文件保持不变
+
+#### Scenario: 调试不同账户的配额
+
+- GIVEN 用户账户 A 的配额用完
+- WHEN 用户运行 `tts-cli input.md --play --appId account_B_app_id --token account_B_token`
+- THEN 使用账户 B 的凭证发起 API 请求
+- AND 可以继续播放音频
+
+---
+
 ### Requirement: 强制使用 PCM 格式
 
 系统 SHALL 在 `--play` 模式下强制使用 PCM 格式请求 API，忽略 `--format` 参数。

@@ -66,19 +66,36 @@
 
 支持覆盖的参数：
 
-| 参数              | 说明             | 范围                   |
-| ----------------- | ---------------- | ---------------------- |
-| `--voice`         | 音色             | 见豆包音色列表         |
-| `--model`         | 模型版本         | 如 `seed-tts-1.1`      |
-| `--speed`         | 语速             | [-50, 100]             |
-| `--volume`        | 音量             | [-50, 100]             |
-| `--emotion`       | 情感             | happy / angry / sad 等 |
-| `--emotion-scale` | 情感强度         | [1, 5]                 |
-| `--format`        | 输出格式         | mp3 / pcm / ogg_opus   |
-| `--sample-rate`   | 采样率           | 8000 ~ 48000           |
-| `--bit-rate`      | 比特率（仅 MP3） | 如 128000              |
-| `--lang`          | 语种             | zh-cn / en / ja 等     |
-| `--silence`       | 句尾静音（ms）   | [0, 30000]             |
+| 参数               | 说明             | 范围                   |
+| ------------------ | ---------------- | ---------------------- |
+| `--appId`          | API 应用 ID      | 覆盖配置文件中的 app_id  |
+| `--token`          | API 访问密钥     | 覆盖配置文件中的 token    |
+| `--voice`           | 音色             | 见豆包音色列表         |
+| `--model`           | 模型版本         | 如 `seed-tts-1.1`      |
+| `--speed`           | 语速             | [-50, 100]             |
+| `--volume`          | 音量             | [-50, 100]             |
+| `--emotion`         | 情感             | happy / angry / sad 等 |
+| `--emotion-scale`   | 情感强度         | [1, 5]                 |
+| `--format`          | 输出格式         | mp3 / pcm / ogg_opus   |
+| `--sample-rate`     | 采样率           | 8000 ~ 48000           |
+| `--bit-rate`        | 比特率（仅 MP3） | 如 128000              |
+| `--lang`           | 语种             | zh-cn / en / ja 等     |
+| `--silence`         | 句尾静音（ms）   | [0, 30000]             |
+
+#### Scenario: 运行时覆盖 API 凭证
+
+- GIVEN 配置文件中 `app_id = "old_app_id"`
+- AND 配置文件中 `token = "old_token"`
+- WHEN 用户运行 `tts-cli input.md --appId new_app_id --token new_token`
+- THEN 本次请求使用 `new_app_id` 和 `new_token`
+- AND 配置文件保持不变
+
+#### Scenario: 使用 --appId 调试 API 错误
+
+- GIVEN 用户遇到 API 错误（如配额超限）
+- WHEN 用户运行 `tts-cli input.md --appId debug_app_id --token debug_token`
+- THEN API 错误信息中显示当前使用的凭证
+- AND 方便用户确认是哪个账户出现问题
 
 ---
 

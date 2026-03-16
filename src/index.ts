@@ -92,11 +92,11 @@ const mainCommand = defineCommand({
     },
     appId: {
       type: 'string',
-      description: 'Doubao app_id (for first-run setup)',
+      description: 'Override Doubao app_id (for debugging or using different account)',
     },
     token: {
       type: 'string',
-      description: 'Doubao token (for first-run setup)',
+      description: 'Override Doubao token (for debugging or using different account)',
     },
   },
   /**
@@ -110,7 +110,19 @@ const mainCommand = defineCommand({
       assertFfmpeg();
     }
 
-    const config = await loadConfig();
+    let config = await loadConfig();
+
+    // Allow runtime credential override via --appId and --token
+    if (args.appId || args.token) {
+      config = {
+        ...config,
+        api: {
+          ...config.api,
+          ...(args.appId && { app_id: args.appId }),
+          ...(args.token && { token: args.token }),
+        },
+      };
+    }
 
     const options: TTSOptions = {
       output: args.output,
@@ -140,6 +152,10 @@ const mainCommand = defineCommand({
     } catch (err) {
       if (err instanceof APIError) {
         log.error(err.message);
+        // Show current credentials for debugging
+        log.info(
+          `当前配置: app_id = ${config.api.app_id}, token = ${config.api.token.slice(0, 10)}...`
+        );
         const suggestion = getAPIErrorSuggestion(err.type);
         if (suggestion) {
           log.info(suggestion);
