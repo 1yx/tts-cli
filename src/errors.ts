@@ -9,15 +9,22 @@ export type APIErrorType = 'auth' | 'quota' | 'rate_limit' | 'unknown';
  * @returns The corresponding error type
  */
 export function getAPIErrorType(code: number): APIErrorType {
-  if (code === 45000000) {
+  // TTS API 专用错误码
+  if (code === 45000000 || code === 45000010) {
     return 'auth';
   }
   if (code === 45000292) {
     return 'quota';
   }
-  if (code === 429) {
+
+  // 公共错误码 - 明确列出，避免范围误判
+  if ([100009, 100010, 100013, 100024, 100025, 100026].includes(code)) {
+    return 'auth';
+  }
+  if (code === 100018 || code === 429) {
     return 'rate_limit';
   }
+
   return 'unknown';
 }
 

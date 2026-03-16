@@ -159,6 +159,56 @@ describe('Integration: download-mode', () => {
       );
       expect(existsSync(outputFile)).toBe(false);
     });
+
+    it('throws APIError with correct type for HTTP 401 with JSON body', async () => {
+      const errorFetch = (
+        _input: RequestInfo | URL,
+        _init?: RequestInit
+      ): Promise<Response> => {
+        const errorBody = JSON.stringify({
+          header: {
+            reqid: 'test-reqid',
+            code: 45000010,
+            message: 'load grant: requested grant not found in SaaS storage',
+          },
+        });
+
+        return Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized',
+          body: null,
+          // Add text method to simulate Response.text()
+          text: async () => errorBody,
+        } as unknown as Response);
+      };
+
+      // @ts-ignore - mock fetch
+      global.fetch = errorFetch;
+
+      const { runDownloadMode } = await import('../../src/tts.js');
+      const { loadConfig } = await import('../../src/config.js');
+      const { APIError } = await import('../../src/errors.js');
+
+      const config = await loadConfig();
+
+      let errorThrown: unknown = null;
+      try {
+        await runDownloadMode(inputFile, config);
+      } catch (err) {
+        errorThrown = err;
+      }
+
+      expect(errorThrown).toBeInstanceOf(APIError);
+
+      if (errorThrown instanceof APIError) {
+        expect(errorThrown.code).toBe(45000010);
+        expect(errorThrown.type).toBe('auth');
+        expect(errorThrown.message).toBe(
+          'API 错误 45000010: load grant: requested grant not found in SaaS storage'
+        );
+      }
+    });
   });
 
   describe('file system', () => {

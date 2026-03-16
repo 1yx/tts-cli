@@ -92,11 +92,13 @@ const mainCommand = defineCommand({
     },
     appId: {
       type: 'string',
-      description: 'Override Doubao app_id (for debugging or using different account)',
+      description:
+        'Override Doubao app_id (for debugging or using different account)',
     },
     token: {
       type: 'string',
-      description: 'Override Doubao token (for debugging or using different account)',
+      description:
+        'Override Doubao token (for debugging or using different account)',
     },
   },
   /**
@@ -114,6 +116,16 @@ const mainCommand = defineCommand({
 
     // Allow runtime credential override via --appId and --token
     if (args.appId || args.token) {
+      // Validate that provided values are not empty strings
+      if (args.appId === '') {
+        log.error('--appId requires a value');
+        process.exit(1);
+      }
+      if (args.token === '') {
+        log.error('--token requires a value');
+        process.exit(1);
+      }
+
       config = {
         ...config,
         api: {

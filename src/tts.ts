@@ -196,6 +196,27 @@ async function fetchTTS(opts: FetchTTSOptions): Promise<Response> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    // Try to parse error response as JSON for APIError
+    let apiError: { code: number; message: string; type: string } | null = null;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const errorJson: {
+        header?: { code?: string | number; message?: string };
+      } = JSON.parse(errorText);
+      const code = Number(errorJson.header?.code);
+      const message = String(errorJson.header?.message || errorText);
+      if (code) {
+        // Import APIError and getAPIErrorType dynamically to avoid circular dependency
+        const { getAPIErrorType } = await import('./errors.js');
+        apiError = { code, message, type: getAPIErrorType(code) };
+      }
+    } catch {
+      // JSON parsing failed or no code found, apiError remains null
+    }
+    if (apiError) {
+      const { APIError } = await import('./errors.js');
+      throw new APIError(apiError.code, apiError.message, apiError.type as 'auth' | 'quota' | 'rate_limit' | 'unknown');
+    }
     throw new Error(
       `API request failed: ${response.status} ${response.statusText}\n${errorText}`
     );
