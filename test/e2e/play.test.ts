@@ -93,8 +93,12 @@ describe('E2E: play-mode', () => {
       const proc = spawn('bun', ['run', 'src/index.ts', ...args], {
         env: {
           ...process.env,
-          TTS_CLI_APP_ID: process.env.TTS_CLI_APP_ID || '',
-          TTS_CLI_TOKEN: process.env.TTS_CLI_TOKEN || '',
+          ...(process.env.TTS_CLI_APP_ID && {
+            TTS_CLI_APP_ID: process.env.TTS_CLI_APP_ID,
+          }),
+          ...(process.env.TTS_CLI_TOKEN && {
+            TTS_CLI_TOKEN: process.env.TTS_CLI_TOKEN,
+          }),
         },
       });
 

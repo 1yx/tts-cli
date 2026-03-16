@@ -12,6 +12,7 @@ import {
   parseJSONLine,
 } from './utils.js';
 import { assertFfmpeg } from './env.js';
+import { APIError, getAPIErrorType } from './errors.js';
 
 const TTS_ENDPOINT =
   'https://openspeech.bytedance.com/api/v3/tts/unidirectional';
@@ -581,7 +582,7 @@ async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
 /**
  * Check if the TTS API response is an error.
  * API errors are returned as a single JSON object, not a stream.
- * Throws an error if the response contains an error code.
+ * Throws an APIError if the response contains an error code.
  */
 async function checkAPIErrorResponse(
   body: ReadableStream<Uint8Array>
@@ -598,7 +599,8 @@ async function checkAPIErrorResponse(
         JSON.parse(firstChars);
       const code = Number(parsed.code);
       const message = String(parsed.message);
-      throw new Error(`TTS API error ${code}: ${message}`);
+      const type = getAPIErrorType(code);
+      throw new APIError(code, message, type);
     }
   }
 

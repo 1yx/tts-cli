@@ -6,6 +6,7 @@ import { CONFIG_PATH, loadConfig, saveConfig, DEFAULTS } from './config.js';
 import { runSetup } from './setup.js';
 import { runPlayMode, runDownloadMode, type TTSOptions } from './tts.js';
 import { assertFfmpeg } from './env.js';
+import { APIError, getAPIErrorSuggestion } from './errors.js';
 
 // Parse CLI args for first-run setup
 /**
@@ -101,6 +102,7 @@ const mainCommand = defineCommand({
   /**
    *
    */
+  // eslint-disable-next-line complexity
   async run({ args }) {
     const input = String(args.input);
 
@@ -126,13 +128,25 @@ const mainCommand = defineCommand({
       resourceId: args.resourceId,
     };
 
-    if (args.play) {
-      await runPlayMode(input, config, {
-        ...options,
-        save: args.output !== undefined,
-      });
-    } else {
-      await runDownloadMode(input, config, options);
+    try {
+      if (args.play) {
+        await runPlayMode(input, config, {
+          ...options,
+          save: args.output !== undefined,
+        });
+      } else {
+        await runDownloadMode(input, config, options);
+      }
+    } catch (err) {
+      if (err instanceof APIError) {
+        log.error(err.message);
+        const suggestion = getAPIErrorSuggestion(err.type);
+        if (suggestion) {
+          log.info(suggestion);
+        }
+        process.exit(1);
+      }
+      throw err;
     }
   },
 });
@@ -158,7 +172,7 @@ async function main() {
         ...DEFAULTS,
         api: {
           app_id: appId,
-          token: token,
+          token,
         },
       };
       await saveConfig(config);

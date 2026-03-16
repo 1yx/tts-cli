@@ -81,7 +81,7 @@ export default [
       // | File length (lines)       | 500    | Beyond 500 lines, consider splitting modules   |
       // | Nesting depth (levels)    | 4      | Deep nesting exponentially hides control flow  |
       // | Function parameters       | 3      | More than 3 → wrap in an options object        |
-      // | Cyclomatic complexity      | 10     | Beyond 10, test cases multiply combinatorially |
+      // | Cyclomatic complexity     | 10     | Beyond 10, test cases multiply combinatorially |
       //
       'max-lines-per-function': [
         'error',

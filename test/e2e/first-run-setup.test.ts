@@ -157,7 +157,11 @@ describe('E2E: first-run setup', () => {
       // Run without credentials - will enter interactive setup
       // Since there's no stdin in test environment, the process will be killed
       // We just verify it tries to run setup (config won't be created)
-      const result = await spawnTestCommand(['test/fixtures/test-simple.md']);
+      // Explicitly clear TTS environment variables for this test
+      const result = await spawnTestCommand(['test/fixtures/test-simple.md'], {
+        TTS_CLI_APP_ID: '',
+        TTS_CLI_TOKEN: '',
+      });
 
       // Should fail or timeout (no stdin for interactive setup)
       // Exit code -1 indicates timeout
