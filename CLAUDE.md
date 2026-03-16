@@ -257,9 +257,6 @@ sample_rate = 24000    # 8000/16000/22050/24000/32000/44100/48000
 bit_rate    = 128000   # 仅 MP3 格式有效
 format      = "mp3"    # mp3 / pcm / ogg_opus
 lang        = "zh-cn"  # zh-cn / en / ja / es-mx / id / pt-br
-
-[output]
-dir = "~/Downloads"
 ```
 
 **配置优先级（低 → 高）：**
@@ -309,11 +306,9 @@ Welcome to tts-cli 🎙️
 
 ? Enter your Doubao app_id: xxxxxxxx
 ? Enter your Doubao token: xxxxxxxx
-? Default voice (zh_female_tianmei):
-? Default speed (0):
-
-✓ Config saved
 ```
+
+**注意：** 收集凭证后系统不会立即保存配置，而是先执行命令验证凭证。只有 API 调用成功后才会将凭证保存到配置文件。如果凭证无效，系统会显示错误提示且不会创建配置文件，用户需要修正后重试。
 
 ---
 
@@ -323,8 +318,9 @@ Welcome to tts-cli 🎙️
 
 ```bash
 tts-cli <input>                    # 转换文件，保存 MP3
-tts-cli <input> --play             # 边合成边播放，不保存
-tts-cli <input> --play --output <path>   # 播放完成后保存到指定路径
+tts-cli <input> --play             # 播放（本地文件或生成后播放）
+tts-cli <input> --output <path>    # 保存到指定路径
+tts-cli <input> --force            # 强制覆盖已存在文件
 ```
 
 ### 完整参数列表
@@ -333,8 +329,9 @@ tts-cli <input> --play --output <path>   # 播放完成后保存到指定路径
 tts-cli <input> [options]
 
 参数：
-  --play                    边合成边播放（使用 PCM 流 + ffplay）
-  --output <path>           输出文件路径（指定时才保存）
+  --play                    播放音频（本地文件或生成后播放）
+  --output <path>           输出文件路径（支持文件或文件夹）
+  --force                   强制覆盖已存在文件
 
   --voice <name>            音色（覆盖配置文件）
   --resource-id <id>        资源ID：seed-tts-1.0, seed-tts-2.0 等（覆盖配置文件）
@@ -399,17 +396,16 @@ const disableMarkdownFilter = isMarkdown;
   → 写入 .mp3 文件
 ```
 
-### 模式二：播放模式（--play，无 --output）
+### 模式二：播放模式（--play）
 
+**文件已存在：** 直接播放本地 MP3
 ```
 输入文本
-  → 请求 API（PCM 格式，sample_rate=24000）
-  → 流式接收 chunk → 实时写入 ffplay stdin（边播边听）
-  → 播放结束，退出
+  → 检测到输出文件已存在
+  → ffplay 播放本地 MP3
 ```
 
-### 模式三：播放后保存模式（--play --output <path>）
-
+**文件不存在：** 生成并播放
 ```
 输入文本
   → 请求 API（PCM 格式，sample_rate=24000）
@@ -419,6 +415,29 @@ const disableMarkdownFilter = isMarkdown;
   → 等待 ffplay 进程退出（播放真正结束）
   → buffer → ffmpeg → 保存 MP3
 ```
+
+### 模式三：强制覆盖模式（--force）
+
+```
+输入文本
+  → 忽略文件存在检查
+  → 请求 API 重新生成
+  → 保存 MP3（如有 --play 则同时播放）
+```
+
+---
+
+### 文件存在时的行为
+
+| 参数组合 | 文件存在 | 行为 |
+|---------|---------|------|
+| 无 | ✓ | 提示已存在，退出 |
+| `--play` | ✓ | 直接播放本地 MP3 |
+| `--force` | ✓ | 强制重新生成 |
+| `--play --force` | ✓ | 强制重新生成并播放 |
+| `--output <path>` | ✓ | 提示已存在，退出 |
+| `--play --output <path>` | ✓ | 直接播放本地 MP3 |
+| `--force --output <path>` | ✓ | 强制重新生成 |
 
 ---
 

@@ -22,9 +22,6 @@ export type Config = {
     format: 'mp3' | 'pcm' | 'ogg_opus';
     lang: string;
   };
-  output: {
-    dir: string;
-  };
 };
 
 // Default configuration
@@ -42,9 +39,6 @@ export const DEFAULTS: Config = {
     bit_rate: 128000,
     format: 'mp3',
     lang: 'en',
-  },
-  output: {
-    dir: '~/Downloads',
   },
 };
 
@@ -149,13 +143,23 @@ export function deepMerge<T>(...objects: Partial<T>[]): T {
   return result as T;
 }
 
-// Load config with three-layer merge: defaults < file < cliOverrides
+// Load config with multi-layer merge: defaults < file < cliOverrides < inMemoryCredentials
 /**
- *
+ * Optional inMemoryCredentials parameter for first-run scenario where
+ * credentials are collected but not yet saved to disk.
+ * inMemoryCredentials has the highest priority, overriding all other sources.
  */
 export async function loadConfig(
-  cliOverrides: Partial<Config> = {}
+  cliOverrides: Partial<Config> = {},
+  inMemoryCredentials?: { app_id: string; token: string }
 ): Promise<Config> {
+  // Normal flow: read from file
   const fileConfig = (await readConfigFile()) ?? {};
+
+  // Merge in order: DEFAULTS < fileConfig < cliOverrides < inMemoryCredentials (if provided)
+  if (inMemoryCredentials) {
+    return deepMerge(DEFAULTS, fileConfig, cliOverrides, { api: inMemoryCredentials });
+  }
+
   return deepMerge(DEFAULTS, fileConfig, cliOverrides);
 }

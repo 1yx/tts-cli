@@ -650,7 +650,7 @@ async function checkAPIErrorResponse(
 export async function runPlayMode(
   inputPath: string,
   config: Config,
-  args: TTSOptions & { save?: boolean }
+  args: TTSOptions
 ): Promise<void> {
   assertFfmpeg();
 
@@ -686,7 +686,6 @@ export async function runPlayMode(
     needDrainRef,
   });
 
-  if (args.save !== false) {
-    await saveAudioToFile(audioChunks, outputPath, sampleRate);
-  }
+  // Always save MP3
+  await saveAudioToFile(audioChunks, outputPath, sampleRate);
 }

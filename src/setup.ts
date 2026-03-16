@@ -11,10 +11,16 @@ import {
 import { type Config, DEFAULTS, saveConfig, CONFIG_PATH } from './config.js';
 import { hasFfmpeg, getInstallGuide } from './env.js';
 
+export type Credentials = {
+  app_id: string;
+  token: string;
+};
+
 /**
- *
+ * Collect credentials from user via interactive prompts.
+ * Returns credentials object without saving to disk.
  */
-export async function runSetup(): Promise<void> {
+export async function collectCredentials(): Promise<Credentials> {
   intro('Welcome to tts-cli 🎙️');
 
   // Phase 1: Environment check
@@ -62,16 +68,24 @@ export async function runSetup(): Promise<void> {
     process.exit(0);
   }
 
-  // Create minimal config (only api credentials)
   // isCancel was checked above, so we know these are strings
   const appIdValue = String(app_id);
   const tokenValue = String(token);
+
+  return {
+    app_id: appIdValue,
+    token: tokenValue,
+  };
+}
+
+/**
+ *
+ */
+export async function runSetup(): Promise<void> {
+  const creds = await collectCredentials();
   const config: Config = {
     ...DEFAULTS,
-    api: {
-      app_id: appIdValue,
-      token: tokenValue,
-    },
+    api: creds,
   };
 
   // Save config

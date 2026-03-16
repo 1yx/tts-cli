@@ -28,9 +28,6 @@ const mockConfig: Config = {
     format: 'mp3',
     lang: 'zh-cn',
   },
-  output: {
-    dir: '~/Downloads',
-  },
 };
 
 describe('buildHeaders()', () => {

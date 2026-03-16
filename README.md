@@ -8,8 +8,9 @@ Built with TypeScript and Bun.
 
 - **Download mode**: Convert markdown/text to MP3 files
 - **Play mode**: Stream audio in real-time with ffplay
-  - `--play`: Audio only, no file saved
+  - `--play`: Always saves to MP3 (plays local file if exists)
   - `--play --output <path>`: Play then save to file
+  - `--force`: Force overwrite existing files
 - **Auto-detect markdown filter** based on file extension
 - **Interactive setup wizard** for first-time users
 - **Progress bar** with character count and received KB
@@ -32,7 +33,8 @@ bun run build
 ## Quick Start
 
 ```bash
-# First run - interactive setup (asks for app_id and token only)
+# First run - interactive setup
+# Credentials will be validated before saving to config file
 ./tts-cli input.md
 
 # First run - skip setup by providing credentials directly
@@ -41,14 +43,18 @@ bun run build
 # Convert with default settings
 ./tts-cli input.md
 
-# Play while converting (audio only, no save)
+# Play (plays local file if exists, otherwise generates and plays)
 ./tts-cli input.md --play
 
 # Play then save to custom path
 ./tts-cli input.md --play --output /path/to/output.mp3
 
-# Custom output path (download only)
+# Custom output path (supports files or folders)
 ./tts-cli input.md --output /path/to/output.mp3
+./tts-cli input.md --output /path/to/folder/
+
+# Force overwrite existing file
+./tts-cli input.md --force
 ```
 
 ## Voice Options
@@ -110,9 +116,6 @@ volume      = 0        # [-50, 100]
 sample_rate = 24000    # 8000/16000/22050/24000/32000/44100/48000
 bit_rate    = 128000   # Only for MP3 format
 lang        = "zh-cn"  # zh-cn / en / ja / es-mx / id / pt-br
-
-[output]
-dir = "~/Downloads"
 ```
 
 **Note:** The config file only stores values that differ from defaults. Add additional sections as needed.
@@ -126,8 +129,9 @@ Positional argument:
   input                     Input file path (markdown or text)
 
 Options:
-  --play                    Play audio while converting (requires ffplay)
-  --output <path>           Output file path (save only when specified)
+  --play                    Play audio (local file if exists, otherwise generate and play)
+  --output <path>           Output file path (supports files or folders)
+  --force                   Force overwrite existing output file
 
   --voice <name>            Voice name (overrides config)
   --resource-id <id>        Resource ID: seed-tts-1.0, seed-tts-2.0, etc.
@@ -163,11 +167,14 @@ Setup options (first run only):
 # Japanese text
 ./tts-cli article.md --lang ja --voice multi_female_sophie_conversation_wvae_bigtts
 
-# Play without saving
+# Play (plays local file if exists)
 ./tts-cli article.md --play
 
-# Play and save
-./tts-cli article.md --play --output result.mp3
+# Force regenerate and play
+./tts-cli article.md --play --force
+
+# Save to specific folder
+./tts-cli article.md --output /path/to/podcasts/
 ```
 
 ## Requirements
@@ -226,6 +233,23 @@ bun run build
 - [Volcano Engine TTS API](https://www.volcengine.com/docs/6561/1598757?lang=zh)
 - [Voice List](https://www.volcengine.com/docs/6561/1257544?lang=zh)
 - [API Signature Guide](https://www.volcengine.com/docs/6369/67269)
+
+## Behavior Matrix
+
+| Parameters | File Exists | Behavior |
+|-----------|-------------|----------|
+| None | ✓ | Show error and exit |
+| `--play` | ✓ | Play local MP3 |
+| `--force` | ✓ | Force regenerate |
+| `--play --force` | ✓ | Force regenerate and play |
+| `--output <file>` | ✓ | Show error and exit |
+| `--play --output <file>` | ✓ | Play local MP3 |
+| `--force --output <file>` | ✓ | Force regenerate |
+| None | ✗ | Generate MP3 |
+| `--play` | ✗ | Generate, play, and save MP3 |
+| `--force` | ✗ | Generate MP3 |
+| `--output <path>` | ✗ | Generate MP3 to path |
+| `--output <folder>/` | ✗ | Generate MP3 to folder/input-filename.mp3 |
 
 ## License
 

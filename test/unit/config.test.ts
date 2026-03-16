@@ -129,7 +129,6 @@ describe('loadConfig()', () => {
     expect(config).toBeDefined();
     expect(config.tts).toBeDefined();
     expect(config.api).toBeDefined();
-    expect(config.output).toBeDefined();
 
     // Check that tts fields have expected types
     expect(typeof config.tts.voice).toBe('string');

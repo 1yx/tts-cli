@@ -32,7 +32,7 @@
 
 - GIVEN 配置文件存在
 - WHEN 系统读取配置
-- THEN 文件包含 `[api]`、`[tts]`、`[output]` 三个 section
+- THEN 文件包含 `[api]`、`[tts]` 两个 section
 - AND 文件支持注释，人类可读可编辑
 
 ---
@@ -127,16 +127,25 @@
 
 ### Requirement: 首次运行交互式引导
 
-系统 SHALL 在配置文件不存在时自动触发交互式引导。
+系统 SHALL 在配置文件不存在时自动触发交互式引导，收集凭证后暂存于内存，只有命令执行成功后才保存配置。
 
 #### Scenario: 首次运行
 
 - GIVEN 配置文件不存在
 - WHEN 用户运行任意 tts-cli 命令
 - THEN 系统先检测环境依赖（见 env-check spec）
-- AND 引导用户填写 `app_id`、`token`、默认音色、默认语速
-- AND 引导完成后将配置写入配置文件
-- AND 继续执行原始命令
+- AND 引导用户填写 `app_id`、`token`
+- AND 引导完成后将凭证暂存于内存（不写入配置文件）
+- AND 使用内存凭证执行原始命令
+- AND 命令执行成功后将凭证保存到配置文件
+
+#### Scenario: 首次运行 API 失败
+
+- GIVEN 配置文件不存在
+- WHEN 用户运行任意 tts-cli 命令
+- AND 引导完成后执行命令失败（如 API 凭证无效）
+- THEN 系统不创建配置文件
+- AND 显示错误提示，建议用户重试
 
 #### Scenario: 用户中途取消引导
 

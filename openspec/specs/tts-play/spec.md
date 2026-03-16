@@ -2,17 +2,18 @@
 
 ## Purpose
 
-在文本转语音的同时实时播放音频，提升长文档转换的使用体验。支持边播边存和只播不存两种子模式。通过 ffplay 实现跨平台播放。
+在文本转语音的同时实时播放音频，提升长文档转换的使用体验。支持边播边存模式，所有 `--play` 模式都会保存文件。通过 ffplay 实现跨平台播放。
 
 ## Requirements
 
 ### Requirement: 边播边存模式
 
-系统 SHALL 支持在合成音频的同时实时播放，播放完成后将音频保存为 MP3。
+系统 SHALL 支持在合成音频的同时实时播放，播放完成后将音频保存为 MP3。所有 `--play` 模式都会保存文件。
 
-#### Scenario: --play 模式完整流程
+#### Scenario: --play 模式完整流程（文件不存在）
 
 - GIVEN 用户运行 `tts-cli input.md --play`
+- AND 输出文件不存在
 - WHEN 系统请求 API（强制 PCM 格式）
 - THEN 每个音频 chunk 实时写入 ffplay stdin（立即播放）
 - AND 同时将 chunk 累积到内存 buffer
@@ -22,35 +23,37 @@
 - AND 保存到本地
 - AND 打印 `✓ 已保存到 <outputPath>`
 
+#### Scenario: --play 模式（文件已存在）
+
+- GIVEN 用户运行 `tts-cli input.md --play`
+- AND 输出文件 `input.mp3` 已存在
+- WHEN 系统检测到文件存在
+- THEN 不调用 API
+- AND 使用 ffplay 直接播放 `input.mp3`
+- AND 播放命令为：`ffplay -nodisp -autoexit input.mp3`
+
+#### Scenario: --play --force 强制重新生成
+
+- GIVEN 用户运行 `tts-cli input.md --play --force`
+- AND 输出文件 `input.mp3` 已存在
+- WHEN 系统检测到 --force 参数
+- THEN 忽略文件存在检查
+- AND 调用 API 重新生成（PCM 边播边存）
+- AND 覆盖已存在的 `input.mp3`
+
+#### Scenario: --play --output 指定路径
+
+- GIVEN 用户运行 `tts-cli input.md --play --output /tmp/podcast.mp3`
+- WHEN 转换完成
+- THEN 边播放边生成
+- AND 最终保存到 `/tmp/podcast.mp3`
+
 #### Scenario: 转码在播放结束后才执行
 
 - GIVEN `--play` 模式转换进行中
 - WHEN 流数据接收完毕但 ffplay 仍在播放缓冲区内容
 - THEN 系统等待 ffplay 进程退出
 - AND 不提前触发转码或打印保存提示
-
----
-
-### Requirement: 只播不存模式
-
-系统 SHALL 支持只播放不保存文件的模式。
-
-#### Scenario: --play --no-save 模式
-
-- GIVEN 用户运行 `tts-cli input.md --play --no-save`
-- WHEN 系统请求 API（PCM 格式）
-- THEN 每个音频 chunk 实时写入 ffplay stdin
-- AND 不累积 buffer
-- WHEN 播放结束
-- THEN 进程正常退出
-- AND 本地无任何文件生成
-
-#### Scenario: --no-save 必须配合 --play
-
-- GIVEN 用户运行 `tts-cli input.md --no-save`（不带 --play）
-- WHEN 系统解析参数
-- THEN 打印参数错误提示
-- AND 进程退出，不发起 API 请求
 
 ---
 
