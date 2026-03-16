@@ -143,16 +143,22 @@ const mainCommand = defineCommand({
 async function main() {
   // Check if config exists
   if (!existsSync(CONFIG_PATH)) {
-    // First run - check if credentials provided via CLI
+    // First run - check if credentials provided via CLI args or environment variables
     const cliArgs = parseArgsForSetup(process.argv.slice(2));
 
-    if (cliArgs.appId && cliArgs.token) {
+    // Also check environment variables
+    const envAppId = process.env.TTS_CLI_APP_ID || '';
+    const envToken = process.env.TTS_CLI_TOKEN || '';
+    const appId = cliArgs.appId || envAppId;
+    const token = cliArgs.token || envToken;
+
+    if (appId && token) {
       // Save credentials directly
       const config = {
         ...DEFAULTS,
         api: {
-          app_id: cliArgs.appId,
-          token: cliArgs.token,
+          app_id: appId,
+          token: token,
         },
       };
       await saveConfig(config);

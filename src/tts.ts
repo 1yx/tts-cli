@@ -4,7 +4,13 @@ import type { Config } from './config.js';
 import { readInputFile, resolveOutputPath } from './markdown.js';
 import type { Writable } from 'stream';
 
-import { spawnFfplay, convertPCMtoMP3 } from './utils.js';
+import {
+  spawnFfplay,
+  convertPCMtoMP3,
+  isPipeError,
+  mergeAudioChunks,
+  parseJSONLine,
+} from './utils.js';
 import { assertFfmpeg } from './env.js';
 
 const TTS_ENDPOINT =
@@ -290,26 +296,6 @@ function handleChunk(opts: HandleChunkOptions): boolean {
 }
 
 /**
- * Parse JSON line safely, returning null if invalid.
- */
-
-/**
- *
- */
-function parseJSONLine(line: string): TTSChunk | null {
-  if (!line.trim()) {
-    return null;
-  }
-
-  try {
-    // eslint-disable-next-line no-restricted-syntax
-    return JSON.parse(line) as TTSChunk;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Process streaming response line by line.
  */
 async function processStreamLines(
@@ -329,27 +315,13 @@ async function processStreamLines(
     buffer = lines.pop() ?? '';
 
     for (const line of lines) {
-      const json = parseJSONLine(line);
+      const json = parseJSONLine<TTSChunk>(line);
       if (!json) continue;
 
       const shouldStop = await handler(json);
       if (shouldStop) return;
     }
   }
-}
-
-/**
- * Merge audio chunks into single buffer.
- */
-function mergeAudioChunks(chunks: Uint8Array[]): Uint8Array {
-  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const merged = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return merged;
 }
 
 /**
@@ -400,24 +372,17 @@ export async function runDownloadMode(
 }
 
 /**
- * Set up ffplay close/error handlers with timeout.
+ * Set up ffplay close/error handlers.
+ * No timeout - let ffplay exit naturally when done playing.
  */
 function setupFfplayClosePromise(ffplay: ReturnType<typeof spawnFfplay>): {
   closePromise: Promise<void>;
   cleanup: () => void;
 } {
-  const cleanupFns: Array<() => void> = [];
-
   const closePromise = new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      ffplay.kill();
-      reject(new Error('ffplay close timeout - process killed'));
-    }, 10000);
-    cleanupFns.push(() => clearTimeout(timeout));
-
+    // Exit code 141 (SIGPIPE) is OK - means pipe was closed, ffplay exited
     ffplay.on('close', (code: number | null) => {
-      clearTimeout(timeout);
-      if (code && code !== 0) {
+      if (code && code !== 0 && code !== 141) {
         reject(new Error(`ffplay exited with code ${code}`));
       } else {
         resolve();
@@ -425,7 +390,6 @@ function setupFfplayClosePromise(ffplay: ReturnType<typeof spawnFfplay>): {
     });
 
     ffplay.on('error', (err: Error) => {
-      clearTimeout(timeout);
       reject(new Error(`ffplay error: ${err.message}`));
     });
   });
@@ -433,9 +397,7 @@ function setupFfplayClosePromise(ffplay: ReturnType<typeof spawnFfplay>): {
   return {
     closePromise,
     cleanup: () => {
-      for (const fn of cleanupFns) {
-        fn();
-      }
+      // No cleanup needed anymore (no timeout)
     },
   };
 }
@@ -460,8 +422,21 @@ async function writeToFfplay(
     needDrainRef.value = false;
   }
 
-  if (!stdin.write(chunk)) {
-    needDrainRef.value = true;
+  // Check if stdin is still writable before writing
+  if (stdin.destroyed) {
+    return; // ffplay already exited, silently skip
+  }
+
+  try {
+    if (!stdin.write(chunk)) {
+      needDrainRef.value = true;
+    }
+  } catch (err) {
+    // EPIPE is expected when ffplay exits before we finish writing
+    // Silently ignore - audio has already played to completion
+    if (!isPipeError(err)) {
+      throw err;
+    }
   }
 }
 
@@ -557,9 +532,20 @@ async function finalizeFfplayPlayback(
     await new Promise<void>((resolve) => {
       stdin.once('drain', () => resolve());
     });
+    needDrainRef.value = false;
+  }
+
+  // Ensure all buffered data is written before ending
+  if (stdin.writableLength > 0) {
+    await new Promise<void>((resolve) => {
+      stdin.once('drain', () => resolve());
+    });
   }
 
   stdin.end();
+
+  // Small delay to ensure EOF reaches ffplay before we start waiting for close
+  await new Promise((resolve) => setTimeout(resolve, 100));
   await closePromise;
   cleanup();
 }
@@ -593,6 +579,49 @@ async function streamWithFfplay(opts: StreamWithFfplayOptions): Promise<void> {
 }
 
 /**
+ * Check if the TTS API response is an error.
+ * API errors are returned as a single JSON object, not a stream.
+ * Throws an error if the response contains an error code.
+ */
+async function checkAPIErrorResponse(
+  body: ReadableStream<Uint8Array>
+): Promise<ReadableStream<Uint8Array>> {
+  const readerForCheck = body.getReader();
+  const { value: firstBytes, done } = await readerForCheck.read();
+
+  if (firstBytes && firstBytes.length > 0) {
+    const firstChars = new TextDecoder().decode(firstBytes);
+    // Check if it's an error response (code field exists and is not 0)
+    if (firstChars.includes('"code":') && !firstChars.includes('"code":0')) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const parsed: { code: unknown; message: unknown } =
+        JSON.parse(firstChars);
+      const code = Number(parsed.code);
+      const message = String(parsed.message);
+      throw new Error(`TTS API error ${code}: ${message}`);
+    }
+  }
+
+  // Create a new stream that includes the bytes we already read
+  return new ReadableStream<Uint8Array>({
+    /** Reconstruct the stream with the peeked data */
+    async start(controller) {
+      if (firstBytes && firstBytes.length > 0) {
+        controller.enqueue(firstBytes);
+      }
+      if (!done) {
+        while (true) {
+          const { value, done: doneReading } = await readerForCheck.read();
+          if (doneReading) break;
+          controller.enqueue(value);
+        }
+      }
+      controller.close();
+    },
+  });
+}
+
+/**
  * Play mode: Stream TTS audio to ffplay while accumulating for save.
  */
 export async function runPlayMode(
@@ -618,7 +647,9 @@ export async function runPlayMode(
     throw new Error('API request failed: no response body');
   }
 
-  const reader = body.getReader();
+  // Check for API errors and get the validated stream
+  const stream = await checkAPIErrorResponse(body);
+  const reader = stream.getReader();
   const ffplay = spawnFfplay(sampleRate);
   const { audioChunks, bar, ctx } = initAudioState(text.length);
   const needDrainRef = { value: false };

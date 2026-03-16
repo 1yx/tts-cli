@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'child_process';
 import type { Writable } from 'stream';
+import cliProgress from 'cli-progress';
 
 /**
  * Options for spawning ffplay.
@@ -25,6 +26,48 @@ export function spawnFfplay(sampleRate: number = 24000): ChildProcess {
   });
 
   return player;
+}
+
+/**
+ * Check if an error is a pipe error (EPIPE).
+ * EPIPE is expected when ffplay exits before we finish writing.
+ */
+export function isPipeError(err: unknown): boolean {
+  if (!(err instanceof Error)) {
+    return false;
+  }
+  if ('code' in err && err.code === 'EPIPE') {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Merge audio chunks into single buffer.
+ */
+export function mergeAudioChunks(chunks: Uint8Array[]): Uint8Array {
+  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+  const merged = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return merged;
+}
+
+/**
+ * Parse JSON line safely, returning null if invalid.
+ */
+export function parseJSONLine<T = unknown>(line: string): T | null {
+  if (!line.trim()) {
+    return null;
+  }
+  try {
+    return JSON.parse(line) as T;
+  } catch {
+    return null;
+  }
 }
 
 /**
