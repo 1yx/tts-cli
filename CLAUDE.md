@@ -265,8 +265,14 @@ dir = "~/Downloads"
 **配置优先级（低 → 高）：**
 
 ```
-默认值 < ~/.config/tts-cli/config.toml < CLI 参数
+默认值 < ~/.config/tts-cli/config.toml < 环境变量 < CLI 参数
 ```
+
+**环境变量：**
+- `TTS_CLI_APP_ID` - 覆盖配置文件中的 `app_id`
+- `TTS_CLI_TOKEN` - 覆盖配置文件中的 `token`
+
+空环境变量被视为未设置（会回退到下一层）。
 
 ---
 
@@ -346,7 +352,25 @@ tts-cli <input> [options]
   tts-cli config              查看当前配置
   tts-cli config --edit       用默认编辑器打开配置文件
   tts-cli config --reset      重新触发交互式引导
+
+### 凭证覆盖
+
+支持运行时覆盖 API 凭证，优先级从高到低：CLI 参数 > 环境变量 > 配置文件
+
+```bash
+# CLI 参数覆盖（最高优先级）
+tts-cli input.md --appId <app_id> --token <token>
+
+# 环境变量覆盖
+TTS_CLI_APP_ID=<app_id> TTS_CLI_TOKEN=<token> tts-cli input.md
+
+# 配置文件（默认）
+tts-cli input.md  # 使用 ~/.config/tts-cli/config.toml 中的凭证
 ```
+
+**支持部分覆盖：**
+- 只覆盖 `app_id`：`tts-cli input.md --appId <app_id>`
+- 只覆盖 `token`：`tts-cli input.md --token <token>`
 
 ---
 

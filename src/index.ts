@@ -114,7 +114,21 @@ const mainCommand = defineCommand({
 
     let config = await loadConfig();
 
-    // Allow runtime credential override via --appId and --token
+    // Apply environment variable overrides (layer 2 of 4)
+    const envAppId = process.env.TTS_CLI_APP_ID || '';
+    const envToken = process.env.TTS_CLI_TOKEN || '';
+    if (envAppId || envToken) {
+      config = {
+        ...config,
+        api: {
+          ...config.api,
+          ...(envAppId && { app_id: envAppId }),
+          ...(envToken && { token: envToken }),
+        },
+      };
+    }
+
+    // Allow runtime credential override via --appId and --token (layer 3 of 4)
     if (args.appId || args.token) {
       // Validate that provided values are not empty strings
       if (args.appId === '') {

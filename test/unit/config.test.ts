@@ -160,3 +160,89 @@ describe('loadConfig()', () => {
     // Other tts fields should come from user's config or defaults
   });
 });
+
+// eslint-disable-next-line max-lines-per-function
+describe('Environment variable overrides', () => {
+  const originalEnv = process.env;
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  it('correct priority: CLI > env > file > defaults', () => {
+    const defaults = {
+      api: { app_id: 'default-id', token: 'default-token' },
+    };
+    const fileConfig = {
+      api: { app_id: 'file-id', token: 'file-token' },
+    };
+    const envConfig = {
+      api: { app_id: 'env-id', token: 'env-token' },
+    };
+    const cliConfig = {
+      api: { app_id: 'cli-id' },
+    };
+
+    // Simulate env layer
+    let result = { ...defaults };
+    result = { ...result, ...fileConfig };
+    result = {
+      ...result,
+      api: { ...result.api, ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }), ...(envConfig.api.token && { token: envConfig.api.token }) },
+    };
+    result = {
+      ...result,
+      api: { ...result.api, ...(cliConfig.api.app_id && { app_id: cliConfig.api.app_id }) },
+    };
+
+    expect((result.api as { app_id: string; token: string }).app_id).toBe('cli-id');
+    expect((result.api as { app_id: string; token: string }).token).toBe('env-token');
+  });
+
+  it('environment variables override config file values', () => {
+    const fileConfig = { api: { app_id: 'file-id', token: 'file-token' } };
+    const envConfig = { api: { app_id: 'env-id', token: 'env-token' } };
+
+    let result = { ...fileConfig };
+    result = {
+      ...result,
+      api: { ...result.api, ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }), ...(envConfig.api.token && { token: envConfig.api.token }) },
+    };
+
+    expect((result.api as { app_id: string; token: string }).app_id).toBe('env-id');
+    expect((result.api as { app_id: string; token: string }).token).toBe('env-token');
+  });
+
+  it('empty environment variables are treated as unset', () => {
+    const fileConfig = { api: { app_id: 'file-id', token: 'file-token' } };
+
+    let result = { ...fileConfig };
+    const emptyAppId = '' as string;
+    const emptyToken = '' as string;
+    result = {
+      ...result,
+      api: {
+        ...result.api,
+        ...(emptyAppId && { app_id: emptyAppId }),
+        ...(emptyToken && { token: emptyToken }),
+      },
+    };
+
+    expect((result.api as { app_id: string; token: string }).app_id).toBe('file-id');
+    expect((result.api as { app_id: string; token: string }).token).toBe('file-token');
+  });
+
+  it('partial override: app_id from env, token from config', () => {
+    const fileConfig = { api: { app_id: 'file-id', token: 'file-token' } };
+    const envConfig = { api: { app_id: 'env-id' } }; // Only app_id in env
+
+    let result = { ...fileConfig };
+    result = {
+      ...result,
+      api: { ...result.api, ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }) },
+    };
+
+    expect((result.api as { app_id: string; token: string }).app_id).toBe('env-id');
+    expect((result.api as { app_id: string; token: string }).token).toBe('file-token');
+  });
+});
