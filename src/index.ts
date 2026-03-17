@@ -54,14 +54,12 @@ const mainCommand = defineCommand({
     },
     play: {
       type: 'boolean',
-      description:
-        'Play audio (local file if exists, otherwise generate and play)',
+      description: 'Play audio (local file if exists, otherwise generate and play)',
       default: false,
     },
     output: {
       type: 'string',
-      description:
-        'Output file path (or folder path to save as input-filename.mp3)',
+      description: 'Output file path (or folder path to save as input-filename.mp3)',
     },
     voice: {
       type: 'string',
@@ -105,13 +103,11 @@ const mainCommand = defineCommand({
     },
     appId: {
       type: 'string',
-      description:
-        'Override Doubao app_id (for debugging or using different account)',
+      description: 'Override Doubao app_id (for debugging or using different account)',
     },
     token: {
       type: 'string',
-      description:
-        'Override Doubao token (for debugging or using different account)',
+      description: 'Override Doubao token (for debugging or using different account)',
     },
     force: {
       type: 'boolean',
@@ -185,9 +181,7 @@ const mainCommand = defineCommand({
       speed: args.speed ? parseInt(args.speed, 10) : undefined,
       volume: args.volume ? parseInt(args.volume, 10) : undefined,
       emotion: args.emotion,
-      emotionScale: args.emotionScale
-        ? parseInt(args.emotionScale, 10)
-        : undefined,
+      emotionScale: args.emotionScale ? parseInt(args.emotionScale, 10) : undefined,
       sampleRate: args.sampleRate ? parseInt(args.sampleRate, 10) : undefined,
       bitRate: args.bitRate ? parseInt(args.bitRate, 10) : undefined,
       lang: args.lang,
@@ -210,9 +204,7 @@ const mainCommand = defineCommand({
       } else {
         // No --play, show error and exit
         log.error(`Output file already exists: ${outputPath}`);
-        log.info(
-          'Use --play to play the existing file, or --force to regenerate'
-        );
+        log.info('Use --play to play the existing file, or --force to regenerate');
         process.exit(1);
       }
     }
@@ -230,7 +222,7 @@ const mainCommand = defineCommand({
         const volcConfig = config.providers?.volcengine;
         if (volcConfig) {
           log.info(
-            `当前配置: app_id = ${volcConfig.app_id || '(not set)'}, token = ${volcConfig.token?.slice(0, 10) || '(not set)'}...`
+            `当前配置: app_id = ${volcConfig.app_id || '(not set)'}, token = ${volcConfig.token?.slice(0, 10) || '(not set)'}...`,
           );
         }
         const suggestion = getAPIErrorSuggestion(err.type);
@@ -309,9 +301,7 @@ async function main() {
       api: firstRunCredentials,
     };
     await saveConfig(config);
-    outro(
-      `Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`
-    );
+    outro(`Credentials saved to ${CONFIG_PATH}\n  Next time, just run: tts-cli <input>`);
   }
 }
 
@@ -324,9 +314,7 @@ main().catch((err) => {
 
   // If first run failed, credentials were not saved
   if (firstRunCredentials) {
-    log.info(
-      'Config not saved. Please correct your credentials and try again.'
-    );
+    log.info('Config not saved. Please correct your credentials and try again.');
   }
 
   process.exit(1);

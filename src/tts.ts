@@ -5,12 +5,7 @@ import { readInputFile, resolveOutputPath, checkFileExists } from './markdown.js
 import { unlinkSync } from 'node:fs';
 import { createWriteStream } from 'node:fs';
 
-import {
-  spawnFfplay,
-  convertPCMtoMP3,
-  isPipeError,
-  mergeAudioChunks,
-} from './utils.js';
+import { spawnFfplay, convertPCMtoMP3, isPipeError, mergeAudioChunks } from './utils.js';
 import { assertFfmpeg } from './env.js';
 import { createProvider } from './providers/index.js';
 import type { TTSProvider } from './core/types.js';
@@ -136,7 +131,7 @@ function openSubtitleWriter(outputPath: string): SubtitleWriter {
  */
 function writeSubtitleChunk(
   writer: SubtitleWriter,
-  chunk: import('./core/types.js').SubtitleChunk
+  chunk: import('./core/types.js').SubtitleChunk,
 ): void {
   if (!writer.first) {
     writer.file.write(',\n');
@@ -172,7 +167,7 @@ function createProgressBar(totalChars: number): cliProgress.SingleBar {
       format: '│  [{bar}] {percentage}%  | {receivedKB}KB received',
       hideCursor: true,
     },
-    cliProgress.Presets.shades_classic
+    cliProgress.Presets.shades_classic,
   );
 
   bar.start(100, 0, {
@@ -190,7 +185,7 @@ function createProgressBar(totalChars: number): cliProgress.SingleBar {
 export async function runDownloadMode(
   inputPath: string,
   config: Config,
-  options: TTSOptions = {}
+  options: TTSOptions = {},
 ): Promise<void> {
   const { text, disableMarkdownFilter } = await readInputFile(inputPath);
   const outputPath = resolveOutputPath(inputPath, options.output);
@@ -198,8 +193,7 @@ export async function runDownloadMode(
   // Subtitle setup
   const subtitlePath = outputPath.replace('.mp3', '.subtitle.json');
   const subtitleEnabled =
-    options.subtitle &&
-    (!checkFileExists(subtitlePath) || (options.force ?? false));
+    options.subtitle && (!checkFileExists(subtitlePath) || (options.force ?? false));
   let subtitleWriter: SubtitleWriter | null = null;
   if (subtitleEnabled) {
     subtitleWriter = openSubtitleWriter(outputPath);
@@ -279,7 +273,7 @@ function setupFfplayClosePromise(ffplay: ReturnType<typeof spawnFfplay>): {
 async function writeToFfplay(
   ffplay: ReturnType<typeof spawnFfplay>,
   chunk: Uint8Array,
-  needDrainRef: { value: boolean }
+  needDrainRef: { value: boolean },
 ): Promise<void> {
   const stdin = ffplay.stdin;
   if (!stdin) {
@@ -314,7 +308,7 @@ async function writeToFfplay(
 export async function runPlayMode(
   inputPath: string,
   config: Config,
-  args: TTSOptions
+  args: TTSOptions,
 ): Promise<void> {
   assertFfmpeg();
 
@@ -324,8 +318,7 @@ export async function runPlayMode(
   // Subtitle setup
   const subtitlePath = outputPath.replace('.mp3', '.subtitle.json');
   const subtitleEnabled =
-    args.subtitle &&
-    (!checkFileExists(subtitlePath) || (args.force ?? false));
+    args.subtitle && (!checkFileExists(subtitlePath) || (args.force ?? false));
   let subtitleWriter: SubtitleWriter | null = null;
   if (subtitleEnabled) {
     subtitleWriter = openSubtitleWriter(outputPath);
@@ -421,7 +414,6 @@ export async function runPlayMode(
     stdin.end();
     await new Promise((resolve) => setTimeout(resolve, 100));
     await closePromise;
-
   } catch (err) {
     bar.stop();
     ffplay.kill();
@@ -444,7 +436,7 @@ export async function runPlayMode(
   await convertPCMtoMP3(
     Buffer.from(await Bun.file(tempFilePath).arrayBuffer()),
     outputPath,
-    format.sampleRate
+    format.sampleRate,
   );
   log.success(`Saved to ${outputPath}`);
 

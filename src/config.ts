@@ -147,9 +147,7 @@ export async function readConfigFile(): Promise<Partial<Config> | null> {
   } catch (err) {
     // Only throw error if file exists (parse error), not if it doesn't exist
     if (existsSync(CONFIG_PATH)) {
-      throw new Error(
-        `Failed to parse config file: ${CONFIG_PATH}\nError: ${err}`
-      );
+      throw new Error(`Failed to parse config file: ${CONFIG_PATH}\nError: ${err}`);
     }
     return null;
   }
@@ -193,7 +191,10 @@ export async function saveConfig(config: Config): Promise<void> {
     if (volcConfig.token && volcConfig.token !== DEFAULTS.providers?.volcengine?.token) {
       providerConfig.token = volcConfig.token;
     }
-    if (volcConfig.resource_id && volcConfig.resource_id !== DEFAULTS.providers?.volcengine?.resource_id) {
+    if (
+      volcConfig.resource_id &&
+      volcConfig.resource_id !== DEFAULTS.providers?.volcengine?.resource_id
+    ) {
       providerConfig.resource_id = volcConfig.resource_id;
     }
 
@@ -221,11 +222,7 @@ export function deepMerge<T>(...objects: Partial<T>[]): T {
       if (value === undefined) {
         continue;
       }
-      if (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value)
-      ) {
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         const existingValue = result[key];
         const baseValue =
           typeof existingValue === 'object' && existingValue !== null
@@ -254,7 +251,7 @@ export function deepMerge<T>(...objects: Partial<T>[]): T {
  */
 export async function loadConfig(
   cliOverrides: Partial<Config> = {},
-  inMemoryCredentials?: { app_id: string; token: string }
+  inMemoryCredentials?: { app_id: string; token: string },
 ): Promise<Config> {
   // Read from file
   let fileConfig = (await readConfigFile()) ?? {};

@@ -12,7 +12,7 @@
 export class ProviderAuthError extends Error {
   constructor(
     public provider: string,
-    message: string
+    message: string,
   ) {
     super(`[${provider}] Authentication failed: ${message}`);
     this.name = 'ProviderAuthError';
@@ -26,7 +26,7 @@ export class ProviderAuthError extends Error {
 export class ProviderQuotaError extends Error {
   constructor(
     public provider: string,
-    message: string
+    message: string,
   ) {
     super(`[${provider}] Quota exceeded: ${message}`);
     this.name = 'ProviderQuotaError';
@@ -40,7 +40,7 @@ export class ProviderQuotaError extends Error {
 export class ProviderRateLimitError extends Error {
   constructor(
     public provider: string,
-    public retryAfter?: number
+    public retryAfter?: number,
   ) {
     const retryMsg = retryAfter ? `, retry after ${retryAfter}s` : '';
     super(`[${provider}] Rate limited${retryMsg}`);
@@ -55,7 +55,7 @@ export class ProviderRateLimitError extends Error {
 export class ProviderValidationError extends Error {
   constructor(
     public provider: string,
-    message: string
+    message: string,
   ) {
     super(`[${provider}] Validation failed: ${message}`);
     this.name = 'ProviderValidationError';
@@ -69,7 +69,7 @@ export class ProviderValidationError extends Error {
 export class ProviderNetworkError extends Error {
   constructor(
     public provider: string,
-    message: string
+    message: string,
   ) {
     super(`[${provider}] Network error: ${message}`);
     this.name = 'ProviderNetworkError';
@@ -84,7 +84,7 @@ export class ProviderAPIError extends Error {
   constructor(
     public provider: string,
     public code: number,
-    message: string
+    message: string,
   ) {
     super(`[${provider}] API error ${code}: ${message}`);
     this.name = 'ProviderAPIError';

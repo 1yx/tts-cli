@@ -65,7 +65,7 @@ export class APIError extends Error {
   constructor(
     public readonly code: number,
     message: string,
-    public readonly type: APIErrorType
+    public readonly type: APIErrorType,
   ) {
     super(`API 错误 ${code}: ${message}`);
     this.apiMessage = message;

@@ -5,7 +5,12 @@
  * This is the main entry point for the VolcEngine provider.
  */
 
-import type { TTSProvider, AudioFormat, SynthesizeOptions, ProviderConfig } from '../../core/types.js';
+import type {
+  TTSProvider,
+  AudioFormat,
+  SynthesizeOptions,
+  ProviderConfig,
+} from '../../core/types.js';
 import { VolcEngineHTTP } from './http.js';
 // import { VolcEngineWS } from './websocket.js'; // Future
 import type { VolcEngineConfig } from './types.js';
@@ -55,7 +60,7 @@ export class VolcEngineProvider implements TTSProvider {
    */
   async synthesize(
     text: string,
-    options: SynthesizeOptions & ProviderConfig
+    options: SynthesizeOptions & ProviderConfig,
   ): Promise<import('../../core/types.js').TTSStream> {
     return this.implementation.synthesize(text, options);
   }

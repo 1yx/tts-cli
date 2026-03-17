@@ -11,7 +11,7 @@ function getTempConfigPath(): string {
 // Helper function to spawn CLI command
 async function spawnTestCommand(
   args: string[],
-  env?: Record<string, string>
+  env?: Record<string, string>,
 ): Promise<{
   exitCode: number | null;
   stdout: string;

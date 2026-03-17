@@ -1,12 +1,4 @@
-import {
-  intro,
-  text,
-  password,
-  isCancel,
-  note,
-  confirm,
-  log,
-} from '@clack/prompts';
+import { intro, text, password, isCancel, note, confirm, log } from '@clack/prompts';
 import { hasFfmpeg, getInstallGuide } from './env.js';
 
 export type Credentials = {
@@ -28,9 +20,7 @@ export async function collectCredentials(): Promise<Credentials> {
     log.success('ffmpeg is installed');
   } else {
     log.warn('ffmpeg not detected');
-    log.message(
-      'tts-cli requires ffmpeg for audio playback (ffplay) and transcoding.'
-    );
+    log.message('tts-cli requires ffmpeg for audio playback (ffplay) and transcoding.');
     log.message('Please install:');
 
     note(getInstallGuide(), 'Installation Guide');

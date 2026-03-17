@@ -86,9 +86,7 @@ describe('buildPayload()', () => {
       overrides: { disableMarkdownFilter: true },
     });
     expect(enabled.req_params.additions).toBeDefined();
-    expect(
-      JSON.parse(enabled.req_params.additions as string).disable_markdown_filter
-    ).toBe(true);
+    expect(JSON.parse(enabled.req_params.additions as string).disable_markdown_filter).toBe(true);
 
     // When false (falsy), the addition is not added at all (it's optional)
     const disabled = buildPayload({
@@ -110,17 +108,13 @@ describe('buildPayload()', () => {
       config: mockConfig,
       overrides: { emotion: 'happy' },
     });
-    expect((withEmotion.req_params.audio_params as AudioParams).emotion).toBe(
-      'happy'
-    );
+    expect((withEmotion.req_params.audio_params as AudioParams).emotion).toBe('happy');
 
     const withoutEmotion = buildPayload({
       text: 'test',
       config: mockConfig,
     });
-    expect(
-      (withoutEmotion.req_params.audio_params as AudioParams).emotion
-    ).toBeUndefined();
+    expect((withoutEmotion.req_params.audio_params as AudioParams).emotion).toBeUndefined();
   });
 
   it('silence_duration is set when provided', () => {
@@ -129,9 +123,7 @@ describe('buildPayload()', () => {
       config: mockConfig,
       overrides: { silence: 500 },
     });
-    expect(
-      JSON.parse(payload.req_params.additions as string).silence_duration
-    ).toBe(500);
+    expect(JSON.parse(payload.req_params.additions as string).silence_duration).toBe(500);
   });
 
   it('explicit_language is passed correctly', () => {
@@ -140,9 +132,7 @@ describe('buildPayload()', () => {
       config: mockConfig,
       overrides: { lang: 'en' },
     });
-    expect(
-      JSON.parse(payload.req_params.additions as string).explicit_language
-    ).toBe('en');
+    expect(JSON.parse(payload.req_params.additions as string).explicit_language).toBe('en');
   });
 
   it('can combine multiple additions', () => {
@@ -156,9 +146,7 @@ describe('buildPayload()', () => {
       },
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const additions: Record<string, unknown> = JSON.parse(
-      payload.req_params.additions as string
-    );
+    const additions: Record<string, unknown> = JSON.parse(payload.req_params.additions as string);
 
     expect(additions.disable_markdown_filter).toBe(true);
     expect(additions.explicit_language).toBe('ja');

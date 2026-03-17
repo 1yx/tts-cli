@@ -19,7 +19,7 @@ const response = await fetch('https://openspeech.bytedance.com/api/v3/tts/unidir
         sample_rate: 24000,
         speech_rate: 0,
         loudness_rate: 0,
-        enable_subtitle: true,  // Enable subtitle/timestamp!
+        enable_subtitle: true, // Enable subtitle/timestamp!
       },
     },
   }),
@@ -88,7 +88,9 @@ while (true) {
         console.log('=== END ===');
         console.log(`Total sentences: ${allSentences.length}`);
         allSentences.forEach((s, i) => {
-          console.log(`  ${i + 1}. text="${s.text}" (${s.text.length}), words=${s.wordCount}, wordTextLen=${s.wordTextLen}`);
+          console.log(
+            `  ${i + 1}. text="${s.text}" (${s.text.length}), words=${s.wordCount}, wordTextLen=${s.wordTextLen}`,
+          );
         });
         console.log(`\nTotal sentence chars: ${totalSentenceChars}`);
         console.log(`Total word chars: ${totalWordChars}`);

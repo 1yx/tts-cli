@@ -83,14 +83,8 @@ export default [
       // | Function parameters       | 3      | More than 3 → wrap in an options object        |
       // | Cyclomatic complexity     | 10     | Beyond 10, test cases multiply combinatorially |
       //
-      'max-lines-per-function': [
-        'error',
-        { max: 50, skipBlankLines: true, skipComments: true },
-      ],
-      'max-lines': [
-        'error',
-        { max: 500, skipBlankLines: true, skipComments: true },
-      ],
+      'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
       'max-depth': ['error', 4],
       'max-params': ['error', 3],
       complexity: ['error', 10],
@@ -218,8 +212,7 @@ export default [
         {
           object: 'Date',
           property: 'now',
-          message:
-            'Use Temporal.Now.instant().epochMilliseconds instead of Date.now().',
+          message: 'Use Temporal.Now.instant().epochMilliseconds instead of Date.now().',
         },
         // Block `Date.parse()` — use Temporal.Instant.from(...).epochMilliseconds instead.
         {
@@ -266,11 +259,7 @@ export default [
             MethodDefinition: true,
           },
           // Also require docs on exported TS types, interfaces, and enums.
-          contexts: [
-            'TSInterfaceDeclaration',
-            'TSTypeAliasDeclaration',
-            'TSEnumDeclaration',
-          ],
+          contexts: ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration', 'TSEnumDeclaration'],
           checkAllFunctionExpressions: false,
           // Enforce on all declarations, not just exported ones — internal logic also benefits.
           publicOnly: false,

@@ -17,7 +17,7 @@ import { VolcEngineProvider } from './volcengine/index.js';
  */
 export function createProvider(
   name: string,
-  config: { providers: Record<string, ProviderConfig> }
+  config: { providers: Record<string, ProviderConfig> },
 ): TTSProvider {
   const providerConfig = config.providers[name];
 
@@ -27,9 +27,7 @@ export function createProvider(
     // case 'openai':
     //   return new OpenAIProvider(providerConfig as any);
     default:
-      throw new Error(
-        `Unknown provider: ${name}. Available: volcengine`
-      );
+      throw new Error(`Unknown provider: ${name}. Available: volcengine`);
   }
 }
 

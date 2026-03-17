@@ -18,7 +18,7 @@ export function spawnFfplay(sampleRate: number = 24000): ChildProcess {
     ['-f', 's16le', '-ar', String(sampleRate), '-nodisp', '-autoexit', '-'],
     {
       stdio: ['pipe', 'ignore', 'ignore'],
-    }
+    },
   );
 
   player.on('error', (err) => {
@@ -73,10 +73,7 @@ export function parseJSONLine<T = unknown>(line: string): T | null {
 /**
  * Write PCM data to ffmpeg stdin.
  */
-function writePCMToStdin(
-  pcmData: Buffer,
-  stdin: Writable | null
-): Promise<void> {
+function writePCMToStdin(pcmData: Buffer, stdin: Writable | null): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     if (!stdin) {
       reject(new Error('ffmpeg stdin is not available'));
@@ -102,27 +99,13 @@ function writePCMToStdin(
 /**
  * Create ffmpeg process for PCM to MP3 conversion.
  */
-function spawnFFmpegProcess(
-  outputPath: string,
-  sampleRate: number
-): ReturnType<typeof spawn> {
+function spawnFFmpegProcess(outputPath: string, sampleRate: number): ReturnType<typeof spawn> {
   return spawn(
     'ffmpeg',
-    [
-      '-f',
-      's16le',
-      '-ar',
-      String(sampleRate),
-      '-ac',
-      '1',
-      '-y',
-      '-i',
-      'pipe:0',
-      outputPath,
-    ],
+    ['-f', 's16le', '-ar', String(sampleRate), '-ac', '1', '-y', '-i', 'pipe:0', outputPath],
     {
       stdio: ['pipe', 'pipe', 'pipe'],
-    }
+    },
   );
 }
 
@@ -132,7 +115,7 @@ function spawnFFmpegProcess(
 function setupFFmpegHandlers(
   ffmpeg: ReturnType<typeof spawn>,
   resolve: () => void,
-  reject: (err: Error) => void
+  reject: (err: Error) => void,
 ): void {
   let stderr = '';
 
@@ -159,7 +142,7 @@ function setupFFmpegHandlers(
 export async function convertPCMtoMP3(
   pcm: Buffer,
   outputPath: string,
-  sampleRate: number
+  sampleRate: number,
 ): Promise<void> {
   const ffmpeg = spawnFFmpegProcess(outputPath, sampleRate);
 
@@ -181,10 +164,7 @@ export async function convertPCMtoMP3(
  * @param chunk - The data chunk to write
  * @returns Promise that resolves when write is complete
  */
-export function safeWrite(
-  stream: Writable,
-  chunk: Uint8Array
-): Promise<void> {
+export function safeWrite(stream: Writable, chunk: Uint8Array): Promise<void> {
   return new Promise((resolve) => {
     // Check if stream can still be written to
     if (!stream.writable || stream.destroyed) {

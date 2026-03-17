@@ -1,5 +1,3 @@
-
-
 # 16 Startup Metrics
 
 > Jeff Jordan, Anu Hariharan, Frank Chen, and Preethi Kasireddy Posted
@@ -173,4 +171,3 @@ It’s fine to present metrics in any order as you tell your story.
 When initially evaluating businesses, investors often look at GMV, revenue, and bookings first because they’re an indicator of the size of the business. Once investors have a sense of the the size of the business, they’ll want to understand growth to see how well the company is performing. These basic metrics, if interesting, then compel us to look even further.
 
 As one of our partners who recently had a baby observes here: It’s almost like doing a health check for your baby at the pediatrician’s office. Check weight and height, and then compare to previous estimates to make sure things look healthy before you go any deeper!
-

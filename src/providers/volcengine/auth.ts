@@ -9,9 +9,7 @@ import type { VolcEngineConfig } from './types.js';
 /**
  * Build HTTP headers for VolcEngine TTS API request.
  */
-export function buildAuthHeaders(
-  config: VolcEngineConfig
-): Record<string, string> {
+export function buildAuthHeaders(config: VolcEngineConfig): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Api-App-Id': config.app_id,

@@ -92,10 +92,7 @@ export interface TTSProvider {
    * @param options Synthesis options
    * @returns Stream implementing TTSStream interface
    */
-  synthesize(
-    text: string,
-    options: SynthesizeOptions & ProviderConfig
-  ): Promise<TTSStream>;
+  synthesize(text: string, options: SynthesizeOptions & ProviderConfig): Promise<TTSStream>;
 }
 
 /**

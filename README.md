@@ -251,20 +251,20 @@ bun run build
 
 ## Behavior Matrix
 
-| Parameters | File Exists | Behavior |
-|-----------|-------------|----------|
-| None | ✓ | Show error and exit |
-| `--play` | ✓ | Play local MP3 |
-| `--force` | ✓ | Force regenerate |
-| `--play --force` | ✓ | Force regenerate and play |
-| `--output <file>` | ✓ | Show error and exit |
-| `--play --output <file>` | ✓ | Play local MP3 |
-| `--force --output <file>` | ✓ | Force regenerate |
-| None | ✗ | Generate MP3 |
-| `--play` | ✗ | Generate, play, and save MP3 |
-| `--force` | ✗ | Generate MP3 |
-| `--output <path>` | ✗ | Generate MP3 to path |
-| `--output <folder>/` | ✗ | Generate MP3 to folder/input-filename.mp3 |
+| Parameters                | File Exists | Behavior                                  |
+| ------------------------- | ----------- | ----------------------------------------- |
+| None                      | ✓           | Show error and exit                       |
+| `--play`                  | ✓           | Play local MP3                            |
+| `--force`                 | ✓           | Force regenerate                          |
+| `--play --force`          | ✓           | Force regenerate and play                 |
+| `--output <file>`         | ✓           | Show error and exit                       |
+| `--play --output <file>`  | ✓           | Play local MP3                            |
+| `--force --output <file>` | ✓           | Force regenerate                          |
+| None                      | ✗           | Generate MP3                              |
+| `--play`                  | ✗           | Generate, play, and save MP3              |
+| `--force`                 | ✗           | Generate MP3                              |
+| `--output <path>`         | ✗           | Generate MP3 to path                      |
+| `--output <folder>/`      | ✗           | Generate MP3 to folder/input-filename.mp3 |
 
 ## Interrupt Behavior (Ctrl+C)
 

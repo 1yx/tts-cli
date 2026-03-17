@@ -26,7 +26,7 @@ export abstract class BaseProvider implements TTSProvider {
     if (speed < MIN_SPEED || speed > MAX_SPEED) {
       throw new ProviderValidationError(
         this.name,
-        `Speed must be between ${MIN_SPEED} and ${MAX_SPEED}, got ${speed}`
+        `Speed must be between ${MIN_SPEED} and ${MAX_SPEED}, got ${speed}`,
       );
     }
   }
@@ -39,7 +39,7 @@ export abstract class BaseProvider implements TTSProvider {
     if (volume < MIN_VOLUME || volume > MAX_VOLUME) {
       throw new ProviderValidationError(
         this.name,
-        `Volume must be between ${MIN_VOLUME} and ${MAX_VOLUME}, got ${volume}`
+        `Volume must be between ${MIN_VOLUME} and ${MAX_VOLUME}, got ${volume}`,
       );
     }
   }
@@ -52,7 +52,7 @@ export abstract class BaseProvider implements TTSProvider {
     if (!validRates.includes(sampleRate)) {
       throw new ProviderValidationError(
         this.name,
-        `Sample rate must be one of ${validRates.join(', ')}, got ${sampleRate}`
+        `Sample rate must be one of ${validRates.join(', ')}, got ${sampleRate}`,
       );
     }
   }
@@ -61,6 +61,6 @@ export abstract class BaseProvider implements TTSProvider {
   abstract validateCredentials(): Promise<boolean>;
   abstract synthesize(
     text: string,
-    options: SynthesizeOptions & ProviderConfig
+    options: SynthesizeOptions & ProviderConfig,
   ): Promise<import('./types.js').TTSStream>;
 }

@@ -7,12 +7,14 @@ The tool uses citty as the CLI framework, which auto-generates `--help`. Output 
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Add `--version` option that prints version and exits
 - Add `--dry-run` option for offline validation without API calls
 - Add `--quiet` option for minimal output
 - Add `--validate` option for credential testing
 
 **Non-Goals:**
+
 - `--verbose` option is explicitly out of scope (deferred)
 - No changes to existing TTS conversion behavior
 - No changes to existing specs
@@ -39,6 +41,7 @@ if (process.argv.includes('--version')) {
 **Decision**: Create a new `validateDryRun()` function that runs all validations without side effects.
 
 **Rationale**: Dry-run checks are:
+
 1. Parameter legality (range checks, type validation)
 2. Input file existence/readability
 3. Config file or credential availability
@@ -56,6 +59,7 @@ These checks already exist scattered across the codebase. Centralizing them into
 **Rationale**: `@clack/prompts` doesn't have built-in quiet mode. A simple boolean flag passed to output functions is the most straightforward approach. Progress bar creation is skipped when quiet is true.
 
 **Code locations**:
+
 - `src/cli.ts`: Add `quiet` argument definition
 - `src/tts.ts`: Conditionally skip `createProgressBar()` and log calls
 - `src/commands/convert.ts`: Pass quiet flag to TTS functions
@@ -69,6 +73,7 @@ These checks already exist scattered across the codebase. Centralizing them into
 **Code location**: New function in `src/tts.ts` or `src/commands/convert.ts`
 
 **Flow**:
+
 ```
 --validate detected → skip input file requirement → send "" to API → check response → report result
 ```
@@ -80,6 +85,7 @@ These checks already exist scattered across the codebase. Centralizing them into
 **Rationale**: Version should be single source of truth. Reading from `package.json` ensures CLI output matches npm package version.
 
 **Implementation**:
+
 ```typescript
 const pkg = JSON.parse(await Bun.file('package.json').text());
 console.log(pkg.version);
@@ -88,14 +94,17 @@ console.log(pkg.version);
 ## Risks / Trade-offs
 
 ### `--quiet` loses all feedback
+
 **Risk**: Users won't see progress or errors in quiet mode if something goes wrong.
 **Mitigation**: Always output errors, even in quiet mode. Only suppress informational messages.
 
 ### `--validate` may have false negatives
+
 **Risk**: API rate limiting or network issues could be interpreted as invalid credentials.
 **Mitigation**: Include error context in output ("Credentials are invalid: <error>") so users can distinguish auth failures from network issues.
 
 ### Version parsing could fail
+
 **Risk**: `package.json` might not exist or be malformed in some installation scenarios.
 **Mitigation**: Use try-catch, fallback to hardcoded version if reading fails.
 

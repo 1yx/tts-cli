@@ -3,10 +3,7 @@ import { mkdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // Mock fetch globally
-const mockFetch = (
-  input: RequestInfo | URL,
-  _init?: RequestInit
-): Promise<Response> => {
+const mockFetch = (input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
   const url = typeof input === 'string' ? input : input.toString();
 
   if (!url.includes('openspeech.bytedance.com')) {
@@ -119,10 +116,7 @@ describe('Integration: download-mode', () => {
     });
 
     it('API error with non-zero code throws error containing message, no file written', async () => {
-      const errorFetch = (
-        _input: RequestInfo | URL,
-        _init?: RequestInit
-      ): Promise<Response> => {
+      const errorFetch = (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
         const stream = new ReadableStream({
           start(controller) {
             controller.enqueue(
@@ -130,8 +124,8 @@ describe('Integration: download-mode', () => {
                 `${JSON.stringify({
                   code: 40001,
                   message: 'Invalid credentials',
-                })}\n`
-              )
+                })}\n`,
+              ),
             );
             controller.close();
           },
@@ -154,17 +148,12 @@ describe('Integration: download-mode', () => {
       const config = await loadConfig();
 
       // eslint-disable-next-line @typescript-eslint/await-thenable
-      await expect(runDownloadMode(inputFile, config)).rejects.toThrow(
-        'Invalid credentials'
-      );
+      await expect(runDownloadMode(inputFile, config)).rejects.toThrow('Invalid credentials');
       expect(existsSync(outputFile)).toBe(false);
     });
 
     it('throws APIError with correct type for HTTP 401 with JSON body', async () => {
-      const errorFetch = (
-        _input: RequestInfo | URL,
-        _init?: RequestInit
-      ): Promise<Response> => {
+      const errorFetch = (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> => {
         const errorBody = JSON.stringify({
           header: {
             reqid: 'test-reqid',
@@ -205,7 +194,7 @@ describe('Integration: download-mode', () => {
         expect(errorThrown.code).toBe(45000010);
         expect(errorThrown.type).toBe('auth');
         expect(errorThrown.message).toBe(
-          'API 错误 45000010: load grant: requested grant not found in SaaS storage'
+          'API 错误 45000010: load grant: requested grant not found in SaaS storage',
         );
       }
     });

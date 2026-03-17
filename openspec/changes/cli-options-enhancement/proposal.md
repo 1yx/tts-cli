@@ -4,15 +4,16 @@ Users need better visibility into the CLI tool's state and validation capabiliti
 
 ## What Changes
 
-| Option | Type | Behavior |
-|--------|------|----------|
-| `--version` | Offline | Print version number and exit immediately |
-| `--dry-run` | Offline | Validate all parameters, input file, config, and output path without making API calls |
-| `--quiet` | Online | Download mode with minimal output (single-line "Saved to xxx.mp3"). Still makes full API call and conversion. |
-| `--validate` | Online | Test API credentials by sending an empty string to the TTS API |
-| `--help` | - | Already provided by citty (no changes needed) |
+| Option       | Type    | Behavior                                                                                                      |
+| ------------ | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `--version`  | Offline | Print version number and exit immediately                                                                     |
+| `--dry-run`  | Offline | Validate all parameters, input file, config, and output path without making API calls                         |
+| `--quiet`    | Online  | Download mode with minimal output (single-line "Saved to xxx.mp3"). Still makes full API call and conversion. |
+| `--validate` | Online  | Test API credentials by sending an empty string to the TTS API                                                |
+| `--help`     | -       | Already provided by citty (no changes needed)                                                                 |
 
 **Compatibility notes:**
+
 - `--quiet` conflicts with `--play` (playback mode requires progress feedback)
 - `--verbose` explicitly excluded from this change (deferred)
 

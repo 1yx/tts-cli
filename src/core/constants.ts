@@ -9,7 +9,7 @@
  * Supported audio output formats.
  */
 export const SUPPORTED_FORMATS = ['mp3', 'pcm', 'opus'] as const;
-export type SupportedFormat = typeof SUPPORTED_FORMATS[number];
+export type SupportedFormat = (typeof SUPPORTED_FORMATS)[number];
 
 /**
  * Default audio parameters.

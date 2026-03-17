@@ -5,14 +5,14 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "bun run src/index.ts",
     "build": "bun build src/index.ts --compile --outfile dest/tts-cli",
-    "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "dev": "bun run src/index.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
@@ -32,6 +32,7 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-tsdoc": "^0.5.2",
     "globals": "^17.4.0",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "prettier-plugin-packagejson": "^3.0.2"
   }
 }

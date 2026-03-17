@@ -8,9 +8,7 @@ import { existsSync } from 'fs';
 describe('runPlayMode integration tests', () => {
   describe('file reading', () => {
     it('should correctly read markdown file', async () => {
-      const result = await readInputFile(
-        'test/fixtures/test-resource-id-override.md'
-      );
+      const result = await readInputFile('test/fixtures/test-resource-id-override.md');
 
       expect(result.text).toBeDefined();
       expect(result.text.length).toBeGreaterThan(0);
@@ -18,9 +16,7 @@ describe('runPlayMode integration tests', () => {
     });
 
     it('should detect markdown files correctly', async () => {
-      const result = await readInputFile(
-        'test/fixtures/test-resource-id-override.md'
-      );
+      const result = await readInputFile('test/fixtures/test-resource-id-override.md');
 
       // .md files should have disableMarkdownFilter = true
       expect(result.disableMarkdownFilter).toBe(true);

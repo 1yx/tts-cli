@@ -5,6 +5,7 @@ Currently tts-cli is tightly coupled to VolcEngine (Doubao) TTS API. All provide
 ## What Changes
 
 **Core Abstraction Layer:**
+
 - Create `src/core/types.ts` defining the `TTSProvider` interface contract that all providers must implement
 - Create `src/core/errors.ts` defining unified provider error types (auth, quota, rate_limit)
 - Create `src/core/constants.ts` defining domain constants (supported formats, default values)
@@ -12,6 +13,7 @@ Currently tts-cli is tightly coupled to VolcEngine (Doubao) TTS API. All provide
 - Define `TTSStream` interface with `AsyncIterable<Uint8Array>` for audio chunks to normalize different protocols (HTTP Chunked JSON, WebSocket, raw binary)
 
 **Provider Structure (Facade Pattern):**
+
 - Create `src/providers/` directory for provider implementations
 - Create `src/providers/volcengine/` subdirectory with Facade pattern:
   - `index.ts` - Main entry point implementing `TTSProvider`, routes to HTTP/WebSocket strategies
@@ -22,11 +24,13 @@ Currently tts-cli is tightly coupled to VolcEngine (Doubao) TTS API. All provide
 - Create `src/providers/index.ts` as provider factory
 
 **Refactor Existing Code:**
+
 - Move VolcEngine-specific code from `src/tts.ts` into `providers/volcengine/`
 - Refactor `src/tts.ts` to be provider-agnostic: handles UI (progress bar), data flow pipeline, and ffplay/ffmpeg scheduling only
 - Refactor `src/config.ts` for multi-provider configuration with backward compatibility
 
 **Configuration Changes:**
+
 - Add `provider` field to config (defaults to 'volcengine' for compatibility)
 - Namespace provider configs under `providers.volcengine`, `providers.openai`, etc.
 - Implement auto-migration probe for legacy config format (flat `api.app_id` structure)

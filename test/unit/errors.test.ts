@@ -76,15 +76,11 @@ describe('getAPIErrorType()', () => {
 
 describe('getAPIErrorSuggestion()', () => {
   it('returns correct suggestion for "auth" type', () => {
-    expect(getAPIErrorSuggestion('auth')).toBe(
-      '请检查配置文件中的 app_id 和 token'
-    );
+    expect(getAPIErrorSuggestion('auth')).toBe('请检查配置文件中的 app_id 和 token');
   });
 
   it('returns correct suggestion for "quota" type', () => {
-    expect(getAPIErrorSuggestion('quota')).toBe(
-      '配额已用完，请检查火山引擎控制台的配额使用情况'
-    );
+    expect(getAPIErrorSuggestion('quota')).toBe('配额已用完，请检查火山引擎控制台的配额使用情况');
   });
 
   it('returns correct suggestion for "rate_limit" type', () => {

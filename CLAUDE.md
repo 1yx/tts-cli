@@ -107,22 +107,24 @@ src/
 ```
 
 **核心规则：**
+
 - `core/` 定义契约和领域规则，**绝不依赖**任何外部实现
 - `providers/` 实现契约，**只依赖** `core/`
 - 应用层使用契约，同时依赖 `core/` 和 `providers/`
 
 **依赖倒置的好处：**
+
 1. **可替换性**：可以随时替换 `volcengine` 为 `openai`，核心逻辑无需改动
 2. **可测试性**：可以用 Mock Provider 测试核心业务逻辑
 3. **可维护性**：厂商升级 API 只需修改对应 provider 目录
 
 #### 1.2 分层职责
 
-| 层级 | 目录 | 职责 | 依赖 |
-|------|------|------|------|
-| **核心层 (Core)** | `core/` | 定义领域契约、业务规则、错误类型、常量 | 无依赖（最内层） |
-| **适配层 (Adapter)** | `providers/` | 实现核心契约，封装具体厂商 API | 依赖 `core/` |
-| **应用层 (Application)** | `index.ts`, `tts.ts`, etc. | 业务编排、UI 控制、进度显示 | 依赖 `core/` + `providers/` |
+| 层级                     | 目录                       | 职责                                   | 依赖                        |
+| ------------------------ | -------------------------- | -------------------------------------- | --------------------------- |
+| **核心层 (Core)**        | `core/`                    | 定义领域契约、业务规则、错误类型、常量 | 无依赖（最内层）            |
+| **适配层 (Adapter)**     | `providers/`               | 实现核心契约，封装具体厂商 API         | 依赖 `core/`                |
+| **应用层 (Application)** | `index.ts`, `tts.ts`, etc. | 业务编排、UI 控制、进度显示            | 依赖 `core/` + `providers/` |
 
 ---
 
@@ -131,6 +133,7 @@ src/
 #### 2.1 问题背景
 
 一个 TTS 厂商可能支持多种协议（HTTP Chunked、WebSocket、gRPC 等）。如果将所有协议实现混在一个文件中，会导致：
+
 - 文件臃肿（单文件 500+ 行）
 - 难以测试（协议逻辑耦合）
 - 难以扩展（新增协议需要修改现有代码）
@@ -174,7 +177,7 @@ src/
 // providers/volcengine/index.ts - Facade
 import { TTSProvider, AudioFormat } from '../../core/types.js';
 import { VolcEngineHTTP } from './http.js';
-import { VolcEngineWS } from './websocket.js';  // 未来
+import { VolcEngineWS } from './websocket.js'; // 未来
 
 export class VolcEngineProvider implements TTSProvider {
   name = 'volcengine';
@@ -203,6 +206,7 @@ export class VolcEngineProvider implements TTSProvider {
 ```
 
 **优势：**
+
 1. **单一职责**：每个文件只负责一种协议或一个关注点
 2. **开闭原则**：新增协议无需修改现有代码，只需新增文件
 3. **易于测试**：可以独立测试 HTTP、WebSocket 实现
@@ -218,26 +222,26 @@ export class VolcEngineProvider implements TTSProvider {
 ```typescript
 // TTS 提供者契约 - 所有厂商必须实现
 export interface TTSProvider {
-  name: string;                    // 厂商标识
-  format: AudioFormat;             // 输出格式声明
+  name: string; // 厂商标识
+  format: AudioFormat; // 输出格式声明
   validateCredentials(config: ProviderConfig): Promise<boolean>;
   synthesize(text: string, options: SynthesizeOptions): Promise<TTSStream>;
 }
 
 // TTS 流契约 - 统一的异步流接口
 export interface TTSStream {
-  getAudioChunks(): AsyncIterable<Uint8Array>;    // 音频数据流
-  getSubtitleChunks(): AsyncIterable<SubtitleChunk>;  // 字幕数据流
-  getAudioFormat(): AudioFormat;                   // 格式查询
-  close(): void;                                    // 资源清理
+  getAudioChunks(): AsyncIterable<Uint8Array>; // 音频数据流
+  getSubtitleChunks(): AsyncIterable<SubtitleChunk>; // 字幕数据流
+  getAudioFormat(): AudioFormat; // 格式查询
+  close(): void; // 资源清理
 }
 
 // 音频格式 - 领域值对象
 export interface AudioFormat {
   type: 'pcm' | 'mp3' | 'opus';
-  sampleRate?: number;   // PCM 必需
-  channels?: number;     // PCM 必需
-  bitDepth?: number;     // PCM 必需
+  sampleRate?: number; // PCM 必需
+  channels?: number; // PCM 必需
+  bitDepth?: number; // PCM 必需
 }
 ```
 
@@ -296,6 +300,7 @@ export const MAX_VOLUME = 100;
 ```
 
 **常量的好处：**
+
 - 单一真实来源 (Single Source of Truth)
 - 避免魔法数字 (Magic Numbers)
 - 便于修改和维护
@@ -554,6 +559,7 @@ lang        = "zh-cn"  # zh-cn / en / ja / es-mx / id / pt-br
 ```
 
 **环境变量：**
+
 - `TTS_CLI_APP_ID` - 覆盖配置文件中的 `app_id`
 - `TTS_CLI_TOKEN` - 覆盖配置文件中的 `token`
 
@@ -613,7 +619,7 @@ tts-cli <input> --force            # 强制覆盖已存在文件
 
 ### 完整参数列表
 
-```bash
+````bash
 tts-cli <input> [options]
 
 参数：
@@ -646,9 +652,10 @@ TTS_CLI_APP_ID=<app_id> TTS_CLI_TOKEN=<token> tts-cli input.md
 
 # 配置文件（默认）
 tts-cli input.md  # 使用 ~/.config/tts-cli/config.toml 中的凭证
-```
+````
 
 **支持部分覆盖：**
+
 - 只覆盖 `app_id`：`tts-cli input.md --appId <app_id>`
 - 只覆盖 `token`：`tts-cli input.md --token <token>`
 
@@ -682,6 +689,7 @@ const disableMarkdownFilter = isMarkdown;
 ### 模式二：播放模式（--play）
 
 **文件已存在：** 直接播放本地 MP3
+
 ```
 输入文本
   → 检测到输出文件已存在
@@ -689,6 +697,7 @@ const disableMarkdownFilter = isMarkdown;
 ```
 
 **文件不存在：** 生成并播放
+
 ```
 输入文本
   → 请求 API（PCM 格式，sample_rate=24000）
@@ -712,15 +721,15 @@ const disableMarkdownFilter = isMarkdown;
 
 ### 文件存在时的行为
 
-| 参数组合 | 文件存在 | 行为 |
-|---------|---------|------|
-| 无 | ✓ | 提示已存在，退出 |
-| `--play` | ✓ | 直接播放本地 MP3 |
-| `--force` | ✓ | 强制重新生成 |
-| `--play --force` | ✓ | 强制重新生成并播放 |
-| `--output <path>` | ✓ | 提示已存在，退出 |
-| `--play --output <path>` | ✓ | 直接播放本地 MP3 |
-| `--force --output <path>` | ✓ | 强制重新生成 |
+| 参数组合                  | 文件存在 | 行为               |
+| ------------------------- | -------- | ------------------ |
+| 无                        | ✓        | 提示已存在，退出   |
+| `--play`                  | ✓        | 直接播放本地 MP3   |
+| `--force`                 | ✓        | 强制重新生成       |
+| `--play --force`          | ✓        | 强制重新生成并播放 |
+| `--output <path>`         | ✓        | 提示已存在，退出   |
+| `--play --output <path>`  | ✓        | 直接播放本地 MP3   |
+| `--force --output <path>` | ✓        | 强制重新生成       |
 
 ---
 

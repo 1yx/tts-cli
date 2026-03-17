@@ -4,17 +4,15 @@
  * Handles the HTTP Chunked JSON protocol used by the Doubao TTS API.
  */
 
-import type { TTSStream, AudioFormat, SynthesizeOptions, TTSProvider, ProviderConfig } from '../../core/types.js';
-import {
-  ProviderAuthError,
-  ProviderAPIError,
-  ProviderNetworkError,
-} from '../../core/errors.js';
 import type {
-  VolcEngineConfig,
-  VolcEngineChunk,
-  VolcEngineRequestPayload,
-} from './types.js';
+  TTSStream,
+  AudioFormat,
+  SynthesizeOptions,
+  TTSProvider,
+  ProviderConfig,
+} from '../../core/types.js';
+import { ProviderAuthError, ProviderAPIError, ProviderNetworkError } from '../../core/errors.js';
+import type { VolcEngineConfig, VolcEngineChunk, VolcEngineRequestPayload } from './types.js';
 import { buildAuthHeaders, isAuthError } from './auth.js';
 
 const TTS_ENDPOINT = 'https://openspeech.bytedance.com/api/v3/tts/unidirectional';
@@ -69,7 +67,7 @@ export class VolcEngineHTTP implements TTSProvider {
    */
   async synthesize(
     text: string,
-    options: SynthesizeOptions & Partial<VolcEngineConfig>
+    options: SynthesizeOptions & Partial<VolcEngineConfig>,
   ): Promise<TTSStream> {
     const headers = buildAuthHeaders({
       ...this.config,
@@ -106,7 +104,10 @@ export class VolcEngineHTTP implements TTSProvider {
         throw new ProviderAPIError('volcengine', apiError.code, apiError.message);
       }
 
-      throw new ProviderNetworkError('volcengine', `HTTP ${response.status}: ${response.statusText}`);
+      throw new ProviderNetworkError(
+        'volcengine',
+        `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
 
     if (!response.body) {
@@ -121,7 +122,7 @@ export class VolcEngineHTTP implements TTSProvider {
    */
   private buildPayload(
     text: string,
-    options: SynthesizeOptions & Partial<VolcEngineConfig>
+    options: SynthesizeOptions & Partial<VolcEngineConfig>,
   ): VolcEngineRequestPayload {
     const audioParams = {
       format: options.format || 'mp3',

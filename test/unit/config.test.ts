@@ -1,12 +1,7 @@
 import { describe, it, expect, afterEach } from 'bun:test';
 import { join } from 'path';
 import { homedir } from 'os';
-import {
-  type Config,
-  getConfigDir,
-  deepMerge,
-  loadConfig,
-} from '../../src/config.js';
+import { type Config, getConfigDir, deepMerge, loadConfig } from '../../src/config.js';
 
 describe('getConfigDir()', () => {
   const originalPlatform = process.platform;
@@ -38,9 +33,7 @@ describe('getConfigDir()', () => {
       value: 'win32',
     });
     process.env.APPDATA = 'C:\\Users\\Test\\AppData\\Roaming';
-    expect(getConfigDir()).toBe(
-      join('C:\\Users\\Test\\AppData\\Roaming', 'tts-cli')
-    );
+    expect(getConfigDir()).toBe(join('C:\\Users\\Test\\AppData\\Roaming', 'tts-cli'));
   });
 });
 
@@ -112,12 +105,8 @@ describe('deepMerge()', () => {
 
     const result = deepMerge(defaults, fileConfig, cliOverrides);
 
-    expect((result.api as { app_id: string; token: string }).app_id).toBe(
-      'cli-id'
-    );
-    expect((result.api as { app_id: string; token: string }).token).toBe(
-      'file-token'
-    );
+    expect((result.api as { app_id: string; token: string }).app_id).toBe('cli-id');
+    expect((result.api as { app_id: string; token: string }).token).toBe('file-token');
   });
 });
 
@@ -187,7 +176,11 @@ describe('Environment variable overrides', () => {
     result = { ...result, ...fileConfig };
     result = {
       ...result,
-      api: { ...result.api, ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }), ...(envConfig.api.token && { token: envConfig.api.token }) },
+      api: {
+        ...result.api,
+        ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }),
+        ...(envConfig.api.token && { token: envConfig.api.token }),
+      },
     };
     result = {
       ...result,
@@ -205,7 +198,11 @@ describe('Environment variable overrides', () => {
     let result = { ...fileConfig };
     result = {
       ...result,
-      api: { ...result.api, ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }), ...(envConfig.api.token && { token: envConfig.api.token }) },
+      api: {
+        ...result.api,
+        ...(envConfig.api.app_id && { app_id: envConfig.api.app_id }),
+        ...(envConfig.api.token && { token: envConfig.api.token }),
+      },
     };
 
     expect((result.api as { app_id: string; token: string }).app_id).toBe('env-id');

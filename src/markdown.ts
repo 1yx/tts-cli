@@ -14,7 +14,7 @@ export function detectMarkdown(filePath: string): boolean {
  *
  */
 export async function readInputFile(
-  filePath: string
+  filePath: string,
 ): Promise<{ text: string; disableMarkdownFilter: boolean }> {
   if (!existsSync(filePath)) {
     log.error(`File not found: ${filePath}`);
@@ -31,10 +31,7 @@ export async function readInputFile(
 /**
  *
  */
-export function resolveOutputPath(
-  inputPath: string,
-  outputOption?: string
-): string {
+export function resolveOutputPath(inputPath: string, outputOption?: string): string {
   if (outputOption) {
     // Check if outputOption is a directory (using sync version for simplicity)
     try {

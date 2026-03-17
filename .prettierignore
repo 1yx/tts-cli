@@ -1,0 +1,22 @@
+# Node dependencies
+node_modules/
+
+# Common build output directories
+dist/
+build/
+
+# Test coverage output
+coverage/
+
+# Playwright reports and artifacts
+playwright-report/
+test-results/
+codegen/
+
+# Project specific ignores from eslint.config.mjs
+openspec/changes/archive/**
+.opencode/
+
+# System files
+.DS_Store
+.eslintcache
