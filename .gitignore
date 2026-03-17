@@ -13,3 +13,6 @@ tts-cli
 *.log
 test-temp/
 .DS_Store
+/index
+/bpcopy
+/pbcopy
