@@ -176,17 +176,26 @@ class VolcEngineStream implements TTSStream {
     bitDepth: 16,
   };
 
-  private ended = false;
+  private audioChunks: Uint8Array[] = [];
+  private subtitleChunks: import('../../core/types.js').SubtitleChunk[] = [];
+  private parsed = false;
 
   constructor(private body: ReadableStream<Uint8Array>) {}
 
-  async *getAudioChunks(): AsyncIterable<Uint8Array> {
+  /**
+   * Parse the entire stream and cache audio/subtitle chunks.
+   * This allows both getAudioChunks() and getSubtitleChunks() to work
+   * since the underlying ReadableStream can only be consumed once.
+   */
+  private async parseStream(): Promise<void> {
+    if (this.parsed) return;
+
     const reader = this.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
 
     try {
-      while (!this.ended) {
+      while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
@@ -205,12 +214,23 @@ class VolcEngineStream implements TTSStream {
             // Audio data chunk
             if (chunk.data) {
               const audioData = Uint8Array.from(atob(chunk.data), (c) => c.charCodeAt(0));
-              yield audioData;
+              this.audioChunks.push(audioData);
+            }
+
+            // Subtitle data chunk
+            if (chunk.sentence && chunk.sentence.words && chunk.sentence.words.length > 0) {
+              this.subtitleChunks.push({
+                text: chunk.sentence.text,
+                words: chunk.sentence.words as Array<{
+                  word: string;
+                  startTimeMs: number;
+                  endTimeMs: number;
+                }>,
+              });
             }
 
             // Stream end
             if (chunk.code === 20000000) {
-              this.ended = true;
               return;
             }
           } else {
@@ -221,51 +241,18 @@ class VolcEngineStream implements TTSStream {
       }
     } finally {
       reader.releaseLock();
+      this.parsed = true;
     }
   }
 
+  async *getAudioChunks(): AsyncIterable<Uint8Array> {
+    await this.parseStream();
+    yield* this.audioChunks;
+  }
+
   async *getSubtitleChunks(): AsyncIterable<import('../../core/types.js').SubtitleChunk> {
-    const reader = this.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-
-    try {
-      while (!this.ended) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (!line.trim()) continue;
-
-          const chunk: VolcEngineChunk = JSON.parse(line);
-
-          // Extract subtitle data
-          if (chunk.sentence && chunk.sentence.words && chunk.sentence.words.length > 0) {
-            yield {
-              text: chunk.sentence.text,
-              words: chunk.sentence.words as Array<{
-                word: string;
-                startTimeMs: number;
-                endTimeMs: number;
-              }>,
-            };
-          }
-
-          // Check for stream end
-          if (chunk.code === 20000000) {
-            this.ended = true;
-            return;
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
+    await this.parseStream();
+    yield* this.subtitleChunks;
   }
 
   getAudioFormat(): AudioFormat {

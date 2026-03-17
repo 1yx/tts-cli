@@ -84,14 +84,14 @@
 
 ## 11. Testing and Verification
 
-- [ ] 11.1 Test download mode with legacy config format (auto-migration)
+- [x] 11.1 Test download mode with legacy config format (auto-migration)
 - [ ] 11.2 Test download mode with new config format
-- [ ] 11.3 Test play mode with local file playback
-- [ ] 11.4 Test play mode with generation and streaming
+- [x] 11.3 Test play mode with local file playback
+- [x] 11.4 Test play mode with generation and streaming
 - [ ] 11.5 Test `--validate` flag with provider abstraction
-- [ ] 11.6 Test CLI credential overrides work correctly
-- [ ] 11.7 Test error handling for invalid credentials
-- [ ] 11.8 Test subtitle generation and output
+- [x] 11.6 Test CLI credential overrides work correctly
+- [x] 11.7 Test error handling for invalid credentials
+- [x] 11.8 Test subtitle generation and output
 
 ## 12. Cleanup and Documentation
 
