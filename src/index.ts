@@ -143,10 +143,13 @@ const mainCommand = defineCommand({
     if (envAppId || envToken) {
       config = {
         ...config,
-        api: {
-          ...config.api,
-          ...(envAppId && { app_id: envAppId }),
-          ...(envToken && { token: envToken }),
+        providers: {
+          ...config.providers,
+          volcengine: {
+            ...(config.providers?.volcengine || {}),
+            ...(envAppId && { app_id: envAppId }),
+            ...(envToken && { token: envToken }),
+          },
         },
       };
     }
@@ -165,10 +168,13 @@ const mainCommand = defineCommand({
 
       config = {
         ...config,
-        api: {
-          ...config.api,
-          ...(args.appId && { app_id: args.appId }),
-          ...(args.token && { token: args.token }),
+        providers: {
+          ...config.providers,
+          volcengine: {
+            ...(config.providers?.volcengine || {}),
+            ...(args.appId && { app_id: args.appId }),
+            ...(args.token && { token: args.token }),
+          },
         },
       };
     }
@@ -221,9 +227,12 @@ const mainCommand = defineCommand({
       if (err instanceof APIError) {
         log.error(err.message);
         // Show current credentials for debugging
-        log.info(
-          `当前配置: app_id = ${config.api.app_id}, token = ${config.api.token.slice(0, 10)}...`
-        );
+        const volcConfig = config.providers?.volcengine;
+        if (volcConfig) {
+          log.info(
+            `当前配置: app_id = ${volcConfig.app_id || '(not set)'}, token = ${volcConfig.token?.slice(0, 10) || '(not set)'}...`
+          );
+        }
         const suggestion = getAPIErrorSuggestion(err.type);
         if (suggestion) {
           log.info(suggestion);

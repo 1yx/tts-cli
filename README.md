@@ -95,7 +95,18 @@ nano ~/.config/tts-cli/config.toml
 notepad %APPDATA%\tts-cli\config.toml
 ```
 
-**Default config file (after setup):**
+**New multi-provider config format (recommended):**
+
+```toml
+provider = "volcengine"
+
+[providers.volcengine]
+app_id = "your_app_id"
+token = "your_access_token"
+resource_id = "seed-tts-2.0"  # Optional
+```
+
+**Legacy config format (auto-migrated on load):**
 
 ```toml
 [api]
@@ -103,16 +114,18 @@ app_id = "your_app_id"
 token  = "your_access_token"
 ```
 
-**Advanced configuration** (optional additions):
+**Advanced configuration** with TTS options:
 
 ```toml
-[api]
+provider = "volcengine"
+
+[providers.volcengine]
 app_id = "your_app_id"
-token  = "your_access_token"
+token = "your_access_token"
+resource_id = "seed-tts-2.0"
 
 [tts]
 voice       = "en_male_tim_uranus_bigtts"
-resource_id = "seed-tts-2.0"
 speed       = 0        # [-50, 100]
 volume      = 0        # [-50, 100]
 sample_rate = 24000    # 8000/16000/22050/24000/32000/44100/48000
@@ -120,7 +133,7 @@ bit_rate    = 128000   # Only for MP3 format
 lang        = "zh-cn"  # zh-cn / en / ja / es-mx / id / pt-br
 ```
 
-**Note:** The config file only stores values that differ from defaults. Add additional sections as needed.
+**Note:** The config file only stores values that differ from defaults. Legacy configs are automatically migrated to the new format on load.
 
 ## CLI Parameters
 
